@@ -44,6 +44,7 @@ async function readInput(request, fields) {
   if (fields.includes('deviceLabel') && (typeof input.deviceLabel !== 'string'
     || !input.deviceLabel.trim() || input.deviceLabel.length > 80
     || /[\u0000-\u001f\u007f-\u009f]/.test(input.deviceLabel))) throw 400;
+  if (fields.includes('countView') && typeof input.countView !== 'boolean') throw 400;
   return input;
 }
 
@@ -51,6 +52,8 @@ const expired = (visitor, now) => !visitor.blocked && visitor.expiresAt <= now;
 const publicVisitor = visitor => ({
   id: visitor.id, ip: visitor.ip, deviceLabel: visitor.deviceLabel,
   firstSeen: visitor.firstSeen, lastSeen: visitor.lastSeen,
+  visitCount: Number.isSafeInteger(visitor.visitCount) && visitor.visitCount >= 0 ? visitor.visitCount : 0,
+  countingSince: visitor.countingSince ?? null,
   blocked: visitor.blocked, blockedAt: visitor.blockedAt ?? null
 });
 async function removeVisitor(storage, visitor) {
@@ -85,7 +88,7 @@ export class AccessRegistry {
   fetch(request) {
     return this.serial(async () => {
       const path = new URL(request.url).pathname;
-      const routes = { '/check': ['ipKey'], '/visit': ['ipKey', 'ip', 'deviceLabel'], '/block': ['id'], '/unblock': ['id'] };
+      const routes = { '/check': ['ipKey'], '/visit': ['ipKey', 'ip', 'deviceLabel', 'countView'], '/block': ['id'], '/unblock': ['id'] };
       const isList = path === '/list';
       if (!isList && !Object.hasOwn(routes, path)) return json({ ok: false }, 404);
       const method = isList ? 'GET' : 'POST';
@@ -141,12 +144,19 @@ export class AccessRegistry {
           }
           visitor = {
             id: crypto.randomUUID(), ipKey: input.ipKey, ip: input.ip, deviceLabel: input.deviceLabel,
-            firstSeen: now, lastSeen: now, blocked: false, blockedAt: null, expiresAt: now + RETENTION_MS
+            firstSeen: now, lastSeen: now, blocked: false, blockedAt: null, expiresAt: now + RETENTION_MS,
+            visitCount: 0, countingSince: null
           };
         } else {
+          if (visitor.blocked) return json({ id: visitor.id, blocked: true });
           visitor.lastSeen = now;
           visitor.deviceLabel = input.deviceLabel;
           if (!visitor.blocked) visitor.expiresAt = now + RETENTION_MS;
+        }
+        if (input.countView) {
+          const count = Number.isSafeInteger(visitor.visitCount) && visitor.visitCount >= 0 ? visitor.visitCount : 0;
+          visitor.visitCount = Math.min(Number.MAX_SAFE_INTEGER, count + 1);
+          visitor.countingSince ??= now;
         }
         await storage.put(`v:${visitor.id}`, visitor);
         await storage.put(`ip:${input.ipKey}`, visitor.id);

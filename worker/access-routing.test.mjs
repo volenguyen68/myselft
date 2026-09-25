@@ -290,9 +290,65 @@ test('allowed public requests fetch assets only after checking access; events fo
   const event = await worker.fetch(eventRequest({ headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }), env);
   assert.equal(event.status, 202);
   assert.deepEqual(calls.queue, [{ event: 'view', sessionId, device: 'windows', visitId }]);
-  const visit = calls.registry.find((call) => call.path === '/visit');
+  const visit = calls.registry.findLast((call) => call.path === '/visit');
   assert.equal(visit.body.ip, ip);
   assert.equal(visit.body.deviceLabel, 'Máy tính Windows (Laptop/PC)');
+  assert.equal(visit.body.countView, false);
+});
+
+test('only successful document opens and refreshes count, not resources, prefetches or admin actions', async () => {
+  const { env, calls } = fixture();
+  for (const path of ['/', '/', '/?fbclid=example', '/index.html']) {
+    assert.equal((await worker.fetch(request(path, { headers: { 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate', 'User-Agent': 'iPhone' } }), env)).status, 200);
+  }
+  const counted = () => calls.registry.filter(call => call.path === '/visit' && call.body.countView);
+  assert.equal(counted().length, 4);
+  assert.ok(counted().every(call => call.body.deviceLabel === 'iPhone' && call.body.ip === ip));
+  for (const path of ['/styles.css', '/app.js', '/assets/fonts/InterVariable-4.1.woff2', '/access', '/admin/login', '/missing.html']) {
+    await worker.fetch(request(path), env);
+  }
+  for (const headers of [{ 'Sec-Purpose': 'prefetch;prerender' }, { Purpose: 'prefetch' }, { 'X-Purpose': 'preview; prerender' }, { 'Sec-Fetch-Dest': 'iframe' }, { 'Sec-Fetch-Dest': 'empty' }, { 'Sec-Fetch-Mode': 'cors' }]) {
+    await worker.fetch(request('/', { headers }), env);
+  }
+  await worker.fetch(request('/', { method: 'HEAD' }), env);
+  for (const status of [301, 304, 404, 500]) {
+    env.ASSETS.fetch = async () => new Response(null, { status, headers: { 'Content-Type': 'text/html' } });
+    await worker.fetch(request('/'), env);
+  }
+  env.ASSETS.fetch = async () => new Response('not HTML', { headers: { 'Content-Type': 'text/plain' } });
+  await worker.fetch(request('/'), env);
+  assert.equal(counted().length, 4);
+  assert.equal(calls.queue.length, 0);
+});
+
+test('a block applied during document loading still prevents delivery and counting', async () => {
+  const { env, state, calls } = fixture();
+  env.ASSETS.fetch = async () => {
+    state.blocked = true;
+    return new Response(assetMarker, { headers: { 'Content-Type': 'text/html' } });
+  };
+  const response = await worker.fetch(request('/'), env);
+  assert.equal(response.status, 403);
+  assert.match(await response.text(), /bạn đã bị block🤔/);
+  assert.equal(calls.queue.length, 0);
+});
+
+test('statistics capacity failures require a fresh access check instead of denying allowed visitors', async () => {
+  for (const decision of ['allowed', 'blocked', 'unavailable']) {
+    const { env, calls } = fixture();
+    let checks = 0;
+    env.ACCESS.get = () => ({ fetch: async req => {
+      if (new URL(req.url).pathname === '/visit') return Response.json({ error: 'capacity' }, { status: 503 });
+      checks++;
+      if (checks > 1 && decision === 'unavailable') throw new Error('registry unavailable');
+      return Response.json({ blocked: checks > 1 && decision === 'blocked' });
+    } });
+    const response = await worker.fetch(request('/'), env);
+    assert.equal(checks, 2);
+    assert.equal(response.status, { allowed: 200, blocked: 403, unavailable: 503 }[decision]);
+    assert.equal((await response.text()).includes(assetMarker), decision === 'allowed');
+    assert.equal(calls.queue.length, 0);
+  }
 });
 
 test('missing and failing registries return 503 without blocked accusations, assets, or notifications', async () => {

@@ -4,7 +4,7 @@ import { AccessRegistry } from './access-registry.mjs';
 
 const WEEK = 7 * 86400000;
 const ipKey = index => index.toString(16).padStart(64, '0');
-const visit = (index = 1, extra = {}) => ({ ipKey: ipKey(index), ip: `192.0.${Math.floor(index / 256)}.${index % 256}`, deviceLabel: 'iPhone', ...extra });
+const visit = (index = 1, extra = {}) => ({ ipKey: ipKey(index), ip: `192.0.${Math.floor(index / 256)}.${index % 256}`, deviceLabel: 'iPhone', countView: false, ...extra });
 const req = (path, input, method = input === undefined ? 'GET' : 'POST') => new Request(`https://registry.local${path}`, {
   method, headers: { 'Content-Type': 'application/json' },
   ...(input === undefined ? {} : { body: typeof input === 'string' ? input : JSON.stringify(input) })
@@ -41,7 +41,7 @@ function fixture() {
   const ctx = { storage };
   return {
     registry: new AccessRegistry(ctx, {}), restart: () => new AccessRegistry(ctx, {}),
-    state: () => copy(data), alarm: () => alarm, failNextPut: () => { failPut = true; }
+    state: () => copy(data), seed: (key, value) => data.set(key, copy(value)), alarm: () => alarm, failNextPut: () => { failPut = true; }
   };
 }
 
@@ -59,7 +59,7 @@ test('visit, private list, block and unblock persist across Durable Object insta
   const listing = await (await f.registry.fetch(req('/list'))).json();
   assert.equal(listing.capacity, 500);
   assert.equal(listing.visitors.length, 1);
-  assert.deepEqual(Object.keys(listing.visitors[0]).sort(), ['blocked', 'blockedAt', 'deviceLabel', 'firstSeen', 'id', 'ip', 'lastSeen']);
+  assert.deepEqual(Object.keys(listing.visitors[0]).sort(), ['blocked', 'blockedAt', 'countingSince', 'deviceLabel', 'firstSeen', 'id', 'ip', 'lastSeen', 'visitCount']);
   assert.equal(listing.visitors[0].firstSeen, now - 1000);
   assert.equal(listing.visitors[0].lastSeen, now);
   assert.equal(listing.visitors[0].deviceLabel, 'Máy tính Windows (Laptop/PC)');
@@ -161,7 +161,8 @@ test('only the declared methods and strict bounded schemas are accepted', async 
   for (const input of [null, [], 'not json', {}, visit(1, { secret: 'ignored?' }), visit(1, { ipKey: 'a'.repeat(63) }),
     visit(1, { ip: '256.1.2.3' }), visit(1, { ip: '127.1' }), visit(1, { ip: 'example.com' }),
     visit(1, { ip: '1:2:3:4:5:6:7:8:9' }), visit(1, { ip: 'fe80::1%eth0' }),
-    visit(1, { deviceLabel: '' }), visit(1, { deviceLabel: 'x'.repeat(81) }), visit(1, { deviceLabel: 'iPhone\nextra' })]) {
+    visit(1, { deviceLabel: '' }), visit(1, { deviceLabel: 'x'.repeat(81) }), visit(1, { deviceLabel: 'iPhone\nextra' }),
+    visit(1, { countView: 'true' }), visit(1, { countView: null }), visit(1, { countView: 1 })]) {
     assert.equal((await f.registry.fetch(req('/visit', input))).status, 400, JSON.stringify(input));
   }
   assert.equal((await f.registry.fetch(req('/visit', 'x'.repeat(513)))).status, 413);
@@ -171,6 +172,51 @@ test('only the declared methods and strict bounded schemas are accepted', async 
   assert.equal((await f.registry.fetch(req('/unblock', { id: crypto.randomUUID() }))).status, 404);
   assert.deepEqual(await (await f.registry.fetch(req('/check', { ipKey: ipKey(123) }))).json(), { blocked: false });
   assert.equal(f.state().size, 0);
+});
+
+test('document counts persist atomically, while events and blocked attempts do not inflate them', async t => {
+  let now = 1800000000000;
+  t.mock.method(Date, 'now', () => now);
+  const f = fixture();
+  const first = await (await f.registry.fetch(req('/visit', visit(1, { countView: true })))).json();
+  now += 1000;
+  await Promise.all(Array.from({ length: 20 }, () => f.registry.fetch(req('/visit', visit(1, { countView: true })))));
+  await f.registry.fetch(req('/visit', visit()));
+  let listing = await (await f.restart().fetch(req('/list'))).json();
+  assert.equal(listing.visitors[0].visitCount, 21);
+  assert.equal(listing.visitors[0].countingSince, now - 1000);
+  await f.registry.fetch(req('/block', { id: first.id }));
+  now += 1000;
+  assert.equal((await (await f.registry.fetch(req('/visit', visit(1, { countView: true })))).json()).blocked, true);
+  listing = await (await f.registry.fetch(req('/list'))).json();
+  assert.equal(listing.visitors[0].visitCount, 21);
+  assert.equal(listing.visitors[0].lastSeen, now - 1000);
+  await f.registry.fetch(req('/unblock', { id: first.id }));
+  await f.registry.fetch(req('/visit', visit(1, { countView: true })));
+  assert.equal((await (await f.registry.fetch(req('/list'))).json()).visitors[0].visitCount, 22);
+  f.failNextPut();
+  await assert.rejects(f.registry.fetch(req('/visit', visit(1, { countView: true }))), /storage unavailable/);
+  assert.equal((await (await f.registry.fetch(req('/list'))).json()).visitors[0].visitCount, 22);
+});
+
+test('legacy IPs retain their identity and block status without inventing old visit totals', async t => {
+  let now = 1800000000000;
+  t.mock.method(Date, 'now', () => now);
+  const f = fixture();
+  const id = crypto.randomUUID();
+  f.seed(`ip:${ipKey(1)}`, id);
+  f.seed(`v:${id}`, { id, ...visit(), firstSeen: now - 100000, lastSeen: now - 50000, blocked: true, blockedAt: now - 1000, expiresAt: null });
+  let visitor = (await (await f.registry.fetch(req('/list'))).json()).visitors[0];
+  assert.equal(visitor.visitCount, 0);
+  assert.equal(visitor.countingSince, null);
+  assert.equal(visitor.blocked, true);
+  await f.registry.fetch(req('/unblock', { id }));
+  await f.registry.fetch(req('/visit', visit(1, { countView: true })));
+  visitor = (await (await f.registry.fetch(req('/list'))).json()).visitors[0];
+  assert.equal(visitor.id, id);
+  assert.equal(visitor.firstSeen, now - 100000);
+  assert.equal(visitor.visitCount, 1);
+  assert.equal(visitor.countingSince, now);
 });
 
 test('valid IPv4 and IPv6 addresses work and responses never cache visitor data', async () => {

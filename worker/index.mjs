@@ -150,6 +150,29 @@ export default {
         if (url.pathname === '/blocked') return redirect('/');
         if (!env.ASSETS) return unavailable();
         const asset = await env.ASSETS.fetch(request);
+        // Count delivered documents, not fonts/images, access polling or notification retries.
+        const destination = request.headers.get('Sec-Fetch-Dest');
+        const mode = request.headers.get('Sec-Fetch-Mode');
+        const purpose = `${request.headers.get('Purpose') || ''} ${request.headers.get('Sec-Purpose') || ''} ${request.headers.get('X-Purpose') || ''}`;
+        if (request.method === 'GET' && asset.status === 200
+          && asset.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() === 'text/html'
+          && ['/', '/index.html'].includes(url.pathname)
+          && (!destination || destination === 'document') && (!mode || mode === 'navigate')
+          && !/prefetch|prerender/i.test(purpose)) {
+          const ipKey = await ipDigest(ip, env.IP_HASH_KEY);
+          let decision;
+          try {
+            decision = await accessCall(env, '/visit', {
+              ipKey, ip, deviceLabel: DEVICE_LABELS[classifyDevice(request.headers.get('User-Agent'))], countView: true
+            });
+          } catch {
+            // A full statistics store must not deny an otherwise allowed visitor.
+            // A fresh explicit access decision is still required; failures remain closed.
+            decision = await accessCall(env, '/check', { ipKey });
+          }
+          // The owner may have blocked this IP while its document was being fetched.
+          if (decision.blocked) return html(blockedPage(), 403);
+        }
         const response = new Response(asset.body, asset);
         response.headers.set('Cache-Control', 'no-store');
         response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -175,7 +198,7 @@ export default {
     const limit = await env.RATE_LIMITER.limit({ key: ipKey });
     if (!limit.success) return json({ ok: false, error: 'rate_limited' }, 429, { ...headers, 'Retry-After': '60' });
     try {
-      const visitor = await accessCall(env, '/visit', { ipKey, ip, deviceLabel: DEVICE_LABELS[device] });
+      const visitor = await accessCall(env, '/visit', { ipKey, ip, deviceLabel: DEVICE_LABELS[device], countView: false });
       if (visitor.blocked) return json({ ok: false, blocked: true }, 403, headers);
       const id = env.NOTIFICATIONS.idFromName('personal-intro-inbox');
       const result = await env.NOTIFICATIONS.get(id).fetch(new Request('https://queue.local/events', {
