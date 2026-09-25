@@ -122,7 +122,7 @@
   });
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const pointer = matchMedia('(hover: hover) and (pointer: fine)');
+  const pointer = matchMedia('(min-width: 701px) and (hover: hover) and (pointer: fine)');
   const root = document.documentElement;
   let frame = 0;
   window.addEventListener('pointermove', event => {
@@ -140,6 +140,9 @@
   motion.addEventListener('change', () => {
     cancelAnimationFrame(frame); $('artwork').style.transform = '';
     updateScroll();
+  });
+  pointer.addEventListener('change', () => {
+    cancelAnimationFrame(frame); $('artwork').style.transform = '';
   });
 
   if ('IntersectionObserver' in window) {
