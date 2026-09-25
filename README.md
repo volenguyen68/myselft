@@ -13,6 +13,8 @@ Thông tin được dùng theo yêu cầu:
 
 ## Website và trang quản trị
 
+Font được nhúng trực tiếp trong `site/assets/fonts/`: Inter Variable 4.1 cho tên và nội dung, SVN-Jabana cho chữ viết tay. Trình duyệt tự tải bản WOFF2, không cần khách cài font trên máy hoặc kết nối tới dịch vụ font bên ngoài. Jabana có OTF dự phòng; hai font được preload trong HTML. Inter kèm giấy phép tại `site/assets/fonts/Inter-LICENSE.txt` và nguồn chính thức https://rsms.me/inter/.
+
 - Website chính: [Trang của Nguyên](https://personal-intro-notifications.volenguyen68.workers.dev/).
 - Quản trị riêng: [Quản lý truy cập](https://personal-intro-notifications.volenguyen68.workers.dev/admin), yêu cầu mật khẩu.
 - Kho mã nguồn: [volenguyen68/myselft](https://github.com/volenguyen68/myselft).
