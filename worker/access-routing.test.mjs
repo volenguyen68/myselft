@@ -99,6 +99,21 @@ const assertNoDelivery = (calls) => {
   assert.equal(calls.queue.length, 0, 'must not enqueue a notification');
 };
 
+test('model labels reach the registry and notifications without triggering extra counted views', async () => {
+  const { env, calls } = fixture();
+  const headers = { 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) Chrome/140 Mobile Safari/537.36', 'Sec-CH-UA-Model': '"Pixel 9 Pro"' };
+  const response = await worker.fetch(request('/', { headers }), env);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Accept-CH'), 'Sec-CH-UA-Model');
+  assert.equal(response.headers.get('Critical-CH'), null);
+  assert.equal(calls.registry.findLast(call => call.path === '/visit').body.deviceLabel, 'Android · Pixel 9 Pro');
+  assert.equal((await worker.fetch(eventRequest({ headers }), env)).status, 202);
+  assert.equal(calls.queue[0].deviceLabel, 'Android · Pixel 9 Pro');
+  const visits = calls.registry.filter(call => call.path === '/visit');
+  assert.deepEqual(visits.map(call => call.body.countView), [true, false]);
+  assert.ok(visits.every(call => call.body.deviceLabel === 'Android · Pixel 9 Pro'));
+});
+
 test('unauthenticated admin redirects to login with visit, login renders, and JSON API returns 401', async () => {
   const { env, calls } = fixture();
   const admin = await worker.fetch(request('/admin?visit=' + visitId), env);
@@ -289,7 +304,7 @@ test('allowed public requests fetch assets only after checking access; events fo
   assert.deepEqual(await access.json(), { blocked: false });
   const event = await worker.fetch(eventRequest({ headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } }), env);
   assert.equal(event.status, 202);
-  assert.deepEqual(calls.queue, [{ event: 'view', sessionId, device: 'windows', visitId }]);
+  assert.deepEqual(calls.queue, [{ event: 'view', sessionId, device: 'windows', deviceLabel: 'Máy tính Windows (Laptop/PC)', visitId }]);
   const visit = calls.registry.findLast((call) => call.path === '/visit');
   assert.equal(visit.body.ip, ip);
   assert.equal(visit.body.deviceLabel, 'Máy tính Windows (Laptop/PC)');
@@ -303,7 +318,7 @@ test('only successful document opens and refreshes count, not resources, prefetc
   }
   const counted = () => calls.registry.filter(call => call.path === '/visit' && call.body.countView);
   assert.equal(counted().length, 4);
-  assert.ok(counted().every(call => call.body.deviceLabel === 'iPhone' && call.body.ip === ip));
+  assert.ok(counted().every(call => call.body.deviceLabel === 'iPhone (chưa xác định đời máy)' && call.body.ip === ip));
   for (const path of ['/styles.css', '/app.js', '/assets/fonts/InterVariable-4.1.woff2', '/access', '/admin/login', '/missing.html']) {
     await worker.fetch(request(path), env);
   }

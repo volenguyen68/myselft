@@ -71,8 +71,8 @@ const adminScript = String.raw`
     const path = document.createElementNS(ns, 'path');
     const device = searchText(label);
     let drawing = 'M4 4h16v12H4zM8 21h8M12 16v5';
-    if (/iphone|dien thoai|di dong/.test(device)) drawing = 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM10 5h4M11 19h2';
-    else if (/ipad|tablet|may tinh bang/.test(device)) drawing = 'M5 2h14a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 19h2';
+    if (/ipad|tablet|may tinh bang/.test(device)) drawing = 'M5 2h14a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 19h2';
+    else if (/iphone|android|dien thoai|di dong/.test(device)) drawing = 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM10 5h4M11 19h2';
     else if (/khong xac dinh|chua co/.test(device)) drawing = 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4M12 17h.01';
     path.setAttribute('d', drawing); svg.append(path); wrapper.append(svg);
     return wrapper;

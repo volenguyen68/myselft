@@ -50,7 +50,7 @@ test('all three requested events are accepted', async () => {
 });
 test('rejects invalid and oversized bodies before forwarding', async () => {
   const { env, calls } = envFor();
-  for (const payload of ['{bad', null, [], event('toString'), event('other'), event('ok', { message: 'inject' }), event('ok', { device: 'iphone' }), event('ok', { userAgent: 'iPhone' }), { event: 'ok', sessionId: 'short' }]) {
+  for (const payload of ['{bad', null, [], event('toString'), event('other'), event('ok', { message: 'inject' }), event('ok', { device: 'iphone' }), event('ok', { deviceLabel: 'iPhone 15 Pro Max' }), event('ok', { userAgent: 'iPhone' }), { event: 'ok', sessionId: 'short' }]) {
     assert.equal((await worker.fetch(request(payload), env)).status, 400);
   }
   assert.equal((await worker.fetch(request('x'.repeat(513)), env)).status, 413);
@@ -101,7 +101,7 @@ test('a changed device header does not change session/event deduplication', asyn
   assert.equal(state().queue.length, 1);
   assert.equal(Object.values(state().records)[0].device, 'iphone');
 });
-test('the Worker queues only a device code and every event includes its label without raw UA or IP', async () => {
+test('the Worker queues bounded device labels and every event omits raw UA and IP', async () => {
   const { q, state } = queueFixture();
   const { env } = envFor();
   const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 private-ua-marker';
@@ -121,14 +121,14 @@ test('the Worker queues only a device code and every event includes its label wi
       assert.equal((await worker.fetch(request(event(type), { headers: { 'User-Agent': ua, 'CF-Connecting-IP': ip } }), env)).status, 202);
       await q.alarm();
     }
-    assert.deepEqual(forwarded, ['view', 'later', 'ok'].map(type => ({ ...event(type), device: 'iphone', visitId })));
+    assert.deepEqual(forwarded, ['view', 'later', 'ok'].map(type => ({ ...event(type), device: 'iphone', deviceLabel: 'iPhone (chưa xác định đời máy)', visitId })));
     assert.ok(limitedKeys.every(key => /^[a-f0-9]{64}$/.test(key) && key !== ip));
     assert.equal(messages.length, 3);
     assert.ok(messages[0].message.includes('mở trang'));
     assert.ok(messages[1].message.includes('“Để sau”'));
     assert.ok(messages[2].message.includes('“OK”'));
     for (const message of messages) {
-      assert.ok(message.message.includes('\nThiết bị (ước đoán): iPhone\n'));
+      assert.ok(message.message.includes('\nThiết bị (ước đoán): iPhone (chưa xác định đời máy)\n'));
       assert.equal(message.message.includes(sessionId), false);
       assert.equal(message.url, `https://website.example/admin?visit=${visitId}`);
       assert.equal(message.url_title, 'Quản lý / chặn IP này');
@@ -136,7 +136,7 @@ test('the Worker queues only a device code and every event includes its label wi
     for (const record of Object.values(state().records)) {
       assert.equal(record.device, 'iphone');
       assert.equal(record.status, 'sent');
-      assert.deepEqual(Object.keys(record).sort(), ['attempts', 'device', 'event', 'expiresAt', 'status', 'time', 'visitId']);
+      assert.deepEqual(Object.keys(record).sort(), ['attempts', 'device', 'deviceLabel', 'event', 'expiresAt', 'status', 'time', 'visitId']);
     }
     const retained = JSON.stringify({ state: state(), messages, forwarded });
     assert.equal(retained.includes('private-ua-marker'), false);
@@ -157,6 +157,46 @@ test('old pending records without a device are delivered with the unknown label'
     assert.ok(message.includes('\nThiết bị (ước đoán): Không xác định\n'));
     assert.equal(state().records.legacy.status, 'sent');
     assert.equal(state().queue.length, 0);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('reported model survives delivery while raw header markers are discarded', async () => {
+  const examples = [
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) [FBAN/FBIOS;FBDV/iPhone16,2;FBAV/private-marker]', '', 'iPhone 15 Pro Max'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) [FBDV/iPhone10,4]', '', 'iPhone 8'],
+    ['Mozilla/5.0 (Linux; Android 10; K) Chrome/140.0.0.0 Mobile Safari/537.36 private-marker', '"Pixel 9 Pro"', 'Android · Pixel 9 Pro']
+  ];
+  const originalFetch = globalThis.fetch;
+  try {
+    for (const [ua, model, label] of examples) {
+      const { env } = envFor();
+      const { q, state } = queueFixture();
+      const messages = [];
+      env.NOTIFICATIONS.get = () => ({ fetch: req => q.fetch(req) });
+      globalThis.fetch = async (_, options) => { messages.push(JSON.parse(options.body)); return Response.json({ status: 1 }); };
+      const response = await worker.fetch(request(event('view'), { headers: { 'User-Agent': ua, 'Sec-CH-UA-Model': model } }), env);
+      assert.equal(response.status, 202);
+      await q.alarm();
+      assert.equal(Object.values(state().records)[0].deviceLabel, label);
+      assert.ok(messages[0].message.includes('Thiết bị (ước đoán): ' + label + '\n'));
+      assert.equal(JSON.stringify({state: state(), messages}).includes('private-marker'), false);
+      assert.equal(JSON.stringify(state()).includes('FBDV/'), false);
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('malformed internal model labels use a safe fallback before persistence and delivery', async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    for (const deviceLabel of ['iPhone\nInjected notification', '<b>iPhone</b>', 'a'.repeat(81), { raw: 'iPhone' }]) {
+      const { q, state } = queueFixture();
+      let message;
+      globalThis.fetch = async (_, options) => { message = JSON.parse(options.body).message; return Response.json({ status: 1 }); };
+      await q.fetch(request(event('view', { device: 'iphone', deviceLabel })));
+      assert.equal(Object.values(state().records)[0].deviceLabel, 'iPhone (chưa xác định đời máy)');
+      await q.alarm();
+      assert.ok(message.includes('Thiết bị (ước đoán): iPhone (chưa xác định đời máy)\n'));
+    }
   } finally { globalThis.fetch = originalFetch; }
 });
 test('unknown or invalid internal device values cannot become notification text', async () => {
