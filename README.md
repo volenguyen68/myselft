@@ -2,6 +2,8 @@
 
 Website tiếng Việt lấy cảm hứng từ Apple, nền đen xanh với ánh sáng xanh lam và xanh ngọc. Chân dung dùng nguyên bản PNG 2072 × 3106 do Nguyên chọn, không chỉnh ảnh hoặc thêm khung. Chữ tên hiện lần lượt với chuyển động 3D, ánh bạc xanh lướt trên tên; hiệu ứng được phát lại khi cuộn về đầu. Phần giới thiệu sáng dần từng từ theo vị trí cuộn. Đây là ảnh chân dung có hiệu ứng nghiêng theo chuột, không phải mô hình 3D xoay tự do.
 
+Bản tương tác có nền hạt sáng, điểm sáng theo chuột, các ghi chú nổi quanh chân dung, dòng chữ chuyển động, liên kết mạng xã hội nghiêng nhẹ khi rê chuột và hạt sáng khi nhấn OK. Hiệu ứng tự giảm khi bật Reduce Motion và nền hạt dừng khi tab bị ẩn. Ảnh gốc và hai lời nhắn được giữ nguyên.
+
 Thông tin được dùng theo yêu cầu:
 
 - Võ Lê Nguyên, sinh ngày 06/08/2008.
@@ -9,80 +11,89 @@ Thông tin được dùng theo yêu cầu:
 - Facebook và Locket nằm cùng phần giới thiệu; Instagram và Threads hiển thị `....` để thêm sau.
 - Chỉ có hai nút: **Để sau** → “có duyên gặp lại nhé”; **OK** → “kết bạn ngay nào bạn ơi”.
 
+## Website và trang quản trị
+
+- Website chính: [Trang của Nguyên](https://personal-intro-notifications.volenguyen68.workers.dev/).
+- Quản trị riêng: [Quản lý truy cập](https://personal-intro-notifications.volenguyen68.workers.dev/admin), yêu cầu mật khẩu.
+- Kho mã nguồn: [volenguyen68/myselft](https://github.com/volenguyen68/myselft).
+- [Địa chỉ GitHub Pages cũ](https://volenguyen68.github.io/myselft/) chỉ chuyển hướng sang website chính. Workflow Pages xuất bản **`redirect/`**, không xuất bản `site/`.
+
+Cloudflare Worker phục vụ giao diện trong `site/`, kiểm tra quyền truy cập trước khi trả HTML hoặc tài nguyên, nhận sự kiện tại `/events` và cung cấp trang quản trị. Giữ **`assets.run_worker_first: true`** trong `worker/wrangler.jsonc`; nếu bỏ cơ chế này, tài nguyên có thể được phục vụ trước khi kiểm tra IP.
+
 ## Chạy và chỉnh nội dung
 
-Mở `site/index.html` để xem ngay. Hoặc chạy `python -m http.server 8765 --directory site`, rồi mở `http://localhost:8765`.
-
-Nội dung lời chào, các liên kết mạng xã hội và cấu hình công khai ở `site/config.js`; ngày sinh và trường học ở `site/index.html`. Không có thư viện bên ngoài cần tải khi mở trang. Hiệu ứng tự giảm khi thiết bị bật Reduce Motion.
-
-## Đưa lên GitHub Pages
-
-Kho đích: https://github.com/volenguyen68/myselft
-
-Bản trong thư mục làm việc đã có Git, remote `origin` và commit. Bạn có thể nhấp đúp **PUSH-TO-GITHUB.cmd** để tự đẩy bản đã lưu; Git có thể yêu cầu đăng nhập tài khoản của bạn. Nếu tải bản ZIP và giải nén ở thư mục khác, dùng các bước khởi tạo Git bên dưới.
-
-1. Đẩy toàn bộ mã nguồn này lên nhánh `main`. Không đưa tệp khóa riêng hoặc thư mục `work` lên GitHub.
-2. Trong repository, chọn **Settings → Pages → Build and deployment → Source → GitHub Actions**.
-3. Chọn **Actions → Publish personal website → Run workflow** nếu chưa có lần chạy sau khi đổi cài đặt.
-4. Khi workflow thành công, GitHub hiển thị URL của trang trong mục Pages. URL dự kiến: `https://volenguyen68.github.io/myselft/` — chỉ hoạt động sau khi triển khai thành công.
-
-Workflow chỉ xuất bản thư mục `site/`; mã máy chủ và khóa không được đưa vào trang công khai.
-
-Nếu máy chưa khởi tạo Git:
+Để xem giao diện cục bộ, mở `site/index.html` hoặc chạy:
 
 ```powershell
-git init -b main
-git add .
-git commit -m "Build personal introduction website"
-git remote add origin https://github.com/volenguyen68/myselft.git
-git push -u origin main
+python -m http.server 8765 --directory site
 ```
 
-Nếu đã có kho Git và remote, chỉ cần `git push -u origin main`.
+Sau đó mở `http://localhost:8765`. Bản xem tĩnh chỉ dùng để chỉnh giao diện, không thay thế kiểm tra chặn IP, đăng nhập và thông báo trên Worker.
 
-## Bật thông báo Pushover trên iPhone
+Lời chào, mạng xã hội và cấu hình công khai ở `site/config.js`; ngày sinh và trường học ở `site/index.html`. Không có thư viện bên ngoài cần tải khi mở trang. Hiệu ứng tự giảm khi thiết bị bật Reduce Motion.
 
-Phần máy chủ đã được triển khai tại `https://personal-intro-notifications.volenguyen68.workers.dev/events` và địa chỉ này đã được điền trong `site/config.js`. Khóa Pushover nằm trong Cloudflare Secrets, không có trong kho Git. Cấu hình hiện nhận sự kiện từ origin GitHub Pages `https://volenguyen68.github.io`; xem bằng file hoặc localhost chỉ thử giao diện, không gửi thông báo.
+## Quản lý và chặn IP
 
-Các bước dưới đây dành cho lần cài đặt lại hoặc chuyển tài khoản; không cần chạy lại để đẩy bản giao diện này lên GitHub.
+Thông báo Pushover có liên kết `/admin?visit=<UUID>`. Đây là mã lượt truy cập không chứa IP; mở liên kết yêu cầu đăng nhập và **không tự chặn**. Dashboard đưa lượt được chọn lên đầu, có tìm kiếm IP, danh sách đang chặn và truy cập gần đây. Chọn **Chặn IP** hoặc **Bỏ chặn** để thay đổi quyền truy cập.
 
-GitHub Pages không chạy mã máy chủ. Thư mục `worker/` là máy chủ Cloudflare Workers, giữ kín khóa Pushover và nhận ba sự kiện: `view`, `later`, `ok`.
+IP bị chặn nhận đúng thông báo “bạn đã bị block🤔”; HTML, tài nguyên, `/access` và sự kiện thông báo đều bị chặn. Trang `/admin` vẫn truy cập được để chủ trang có thể bỏ chặn mạng của mình. Tab công khai đang mở kiểm tra quyền truy cập mỗi 15 giây khi đang hiển thị.
 
-1. Cài Pushover trên iPhone, đăng nhập và bật quyền thông báo iOS.
-2. Lấy **User Key** trong tài khoản Pushover và **Application API Token** từ ứng dụng đã đăng ký ở https://pushover.net/apps. Hai khóa khác nhau, không phải API token của dịch vụ khác.
-3. Tạo/đăng nhập tài khoản Cloudflare. Cài Node.js để dùng công cụ triển khai.
-4. Từ thư mục `worker/`, chạy:
+IP gần đây được giữ 7 ngày, tối đa 500 bản ghi; IP đã chặn được giữ đến khi bỏ chặn. IP có thể dùng chung hoặc thay đổi, nên cùng IP không chứng minh là cùng người hay cùng thiết bị. Nhãn thiết bị chỉ là ước đoán từ trình duyệt; không lưu chuỗi User-Agent đầy đủ.
+
+IP nguyên bản chỉ nằm trong `AccessRegistry` riêng, không đưa vào URL quản trị hoặc gửi tới Pushover. Khóa giới hạn tần suất được băm có khóa riêng. Dấu chống trùng sự kiện trong hàng đợi thông báo hết hạn sau khoảng 24 giờ.
+
+Thông tin đăng nhập của chủ trang đã được chuẩn bị trong tệp cục bộ `work/private/ADMIN-LOGIN.txt` ở thư mục làm việc **bên ngoài kho mã nguồn**. Không đưa tệp này hoặc thư mục `work` lên GitHub.
+
+## Thông báo Pushover
+
+Endpoint đang dùng là `https://personal-intro-notifications.volenguyen68.workers.dev/events`, được đặt trong `site/config.js`. Máy chủ nhận ba sự kiện: `view`, `later`, `ok`, rồi gửi qua hàng đợi bền vững. Pushover nhận loại sự kiện, thời gian Việt Nam, nhãn thiết bị ước đoán và liên kết quản trị bằng UUID; không nhận IP nguyên bản.
+
+- Mỗi tab gửi tối đa một thông báo lượt mở và một thông báo cho mỗi lựa chọn. Tải lại cùng tab không gửi lại sự kiện đã được chấp nhận; tab phải đang hiển thị mới tính lượt mở.
+- Giới hạn mặc định: 12 yêu cầu/phút/IP, 20 sự kiện mới/phút toàn trang, tối đa 50 sự kiện đang chờ và 400 dấu sự kiện trong 24 giờ.
+- Pushover chấp nhận tin không bảo đảm iPhone đã hiển thị: thiết bị cần có mạng và quyền thông báo. Nếu kết nối đứt sau khi gửi, hàng đợi không tự gửi lại trường hợp không rõ kết quả để tránh trùng tin.
+- Hai lời nhắn phản hồi trên giao diện vẫn xuất hiện khi dịch vụ thông báo gặp lỗi.
+
+`PUBLIC_ORIGIN` là origin của website Worker; `ALLOWED_ORIGIN` giữ origin GitHub Pages cũ. Khi đổi tên miền, cập nhật cấu hình origin và endpoint rồi triển khai lại. CORS và giới hạn tần suất giúp giảm yêu cầu không mong muốn; quyền quản trị dùng phiên đăng nhập riêng.
+
+## Cấu hình bí mật và triển khai
+
+Các giá trị riêng nằm trong Cloudflare Secrets, không ở frontend hoặc Git:
+
+- `ADMIN_PASSWORD`: mật khẩu ngẫu nhiên ít nhất 32 ký tự.
+- `ADMIN_SESSION_KEY`, `IP_HASH_KEY`: hai khóa ngẫu nhiên riêng, mỗi khóa ít nhất 32 ký tự.
+- `PUSHOVER_APP_TOKEN`, `PUSHOVER_USER_KEY`: khóa ứng dụng và tài khoản Pushover.
+- `PUSHOVER_DEVICE`: tùy chọn, nếu chỉ muốn gửi tới một thiết bị.
+
+Để đặt hoặc đổi secret, chạy `npx wrangler secret put TEN_SECRET` từ thư mục `worker/` và nhập giá trị khi được hỏi. Không ghi giá trị bí mật vào câu lệnh hoặc `site/config.js`. Đổi `ADMIN_SESSION_KEY` làm hết hiệu lực phiên cũ; giữ ổn định `IP_HASH_KEY` để các IP đang chặn tiếp tục được đối chiếu đúng.
+
+Triển khai cả giao diện và máy chủ từ thư mục gốc của kho:
 
 ```powershell
-npx wrangler login
+cd worker
 npx wrangler deploy
-npx wrangler secret put PUSHOVER_APP_TOKEN
-npx wrangler secret put PUSHOVER_USER_KEY
 ```
 
-Mỗi lệnh `secret put` sẽ yêu cầu nhập giá trị riêng. Không đưa khóa vào lệnh, ảnh chụp, GitHub hoặc `site/config.js`. Có thể đặt thêm secret `PUSHOVER_DEVICE` nếu chỉ muốn nhận trên một thiết bị; để trống sẽ gửi tới các thiết bị hoạt động trong tài khoản.
+Lệnh này xuất bản tài nguyên `../site`, các mô-đun Worker và cấu hình Durable Objects. Migration `v1` tạo `NotificationQueue`; migration **`v2` tạo `AccessRegistry`**. Giữ các migration đã triển khai trong `worker/wrangler.jsonc`. Nếu cần đăng nhập Cloudflare trên máy mới, chạy `npx wrangler login` trước.
 
-5. Trong `worker/wrangler.jsonc`, `ALLOWED_ORIGIN` là `https://volenguyen68.github.io`, không gồm `/myselft/`. Nếu dùng tên miền khác phải sửa origin và triển khai lại.
-6. Sao chép địa chỉ Worker được trả về và thêm `/events`; điền vào `notificationEndpoint` trong `site/config.js`, rồi đẩy thay đổi lên GitHub. **Không điền URL giả hoặc chỉ thêm khóa ở frontend.**
-7. Mở trang trong tab mới. iPhone sẽ nhận thông báo lượt mở trang; thử từng nút để kiểm tra hai thông báo còn lại.
-
-### Cách tính sự kiện và giới hạn
-
-- Mỗi tab trình duyệt gửi tối đa một thông báo lượt mở và một thông báo cho mỗi lựa chọn. Tải lại cùng tab không gửi lại sự kiện đã được chấp nhận. Chỉ mở trang khi đang hiển thị mới tính lượt xem.
-- Máy chủ dùng hàng đợi bền vững, xóa dấu nhận diện phiên sau khoảng 24 giờ. Không gửi tên khách, vị trí, địa chỉ IP hoặc lịch sử truy cập tới Pushover. IP chỉ được dùng tạm thời để hạn chế spam ở Cloudflare.
-- Giới hạn mặc định: 12 yêu cầu/phút/IP, 20 sự kiện mới/phút toàn trang, tối đa 50 sự kiện đang chờ và 400 dấu sự kiện trong 24 giờ. Đây là cấu hình cho trang cá nhân, có thể điều chỉnh sau.
-- CORS chỉ chặn yêu cầu từ website khác trong trình duyệt; không phải cơ chế xác thực chống mọi chương trình tự gửi yêu cầu. Có giới hạn gửi để giảm spam. Không thể nhận diện chính xác ai đã mở trang nếu họ không tự cung cấp thông tin.
-- Pushover chấp nhận tin không đảm bảo iPhone đã hiển thị; thiết bị phải có mạng và cho phép thông báo. Hết hạn mức hoặc sai khóa sẽ làm tin thất bại. Mất kết nối sau khi đã gửi có thể tạo kết quả không xác định; không tự gửi lại trong trường hợp đó để tránh spam.
-- Lời nhắn của hai nút luôn xuất hiện ngay cả khi dịch vụ thông báo gặp lỗi. Giao diện không tuyên bố chủ trang đã nhận tin.
+Đẩy Git bằng Git hoặc `PUSH-TO-GITHUB.cmd` chỉ lưu mã nguồn và kích hoạt workflow Pages xuất bản trang chuyển hướng. **`git push` không triển khai thay đổi Worker hoặc website chính**; sau khi sửa `site/` hay `worker/`, cần chạy `npx wrangler deploy`.
 
 ## Kiểm tra
+
+Chạy từ thư mục gốc của kho:
 
 ```powershell
 node --check site/app.js
 node --check site/config.js
-node --test worker/index.test.mjs
+node --check site/effects.js
+node --check worker/index.mjs
+node --check worker/admin-auth.mjs
+node --check worker/admin-ui.mjs
+node --check worker/access-registry.mjs
+node --test worker/*.test.mjs
 ```
 
-Kiểm tra gồm ba sự kiện hợp lệ, dữ liệu sai/quá lớn, origin, giới hạn yêu cầu, chống trùng, thứ tự hàng đợi, lỗi Pushover và trường hợp gửi không chắc chắn. Các bài kiểm tra dùng dịch vụ giả lập, không gửi tin thật.
+Kiểm tra dùng dịch vụ giả lập, không gửi tin thật: chữ ký và hạn phiên đăng nhập, CSRF, IP đáng tin cậy, vòng đời dữ liệu, chặn/bỏ chặn, truy cập quản trị khi IP bị chặn, xử lý registry lỗi không để lộ nội dung, sự kiện thông báo, chống trùng và hàng đợi Pushover.
+
+Bản triển khai đã được kiểm tra: khách chưa đăng nhập được chuyển tới trang đăng nhập, API quản trị trả 401; IP thử nghiệm bị chặn ở HTML/tài nguyên/kiểm tra truy cập, quản trị vẫn mở được, và bỏ chặn khôi phục truy cập. Thông báo thử nghiệm đã đạt trạng thái `sent` ở hàng đợi.
 
 Tài liệu chính thức: [Pushover API](https://pushover.net/api), [Cloudflare secrets](https://developers.cloudflare.com/workers/configuration/secrets/), [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
