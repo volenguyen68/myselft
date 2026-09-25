@@ -65,7 +65,27 @@
     const url = new URL(config.notificationEndpoint);
     if (location.protocol === 'https:' && url.protocol === 'https:' && !url.username && !url.password) endpoint = url.href;
   } catch { /* Notifications stay off until a valid endpoint is configured. */ }
-  if (endpoint) $('privacy').textContent = 'Lượt mở trang, loại thiết bị ước đoán và lựa chọn của bạn được báo cho chủ trang. Không thu thập tên hay vị trí.';
+  if (endpoint) $('privacy').textContent = 'Lượt mở trang, loại thiết bị và lựa chọn được báo cho chủ trang. IP được lưu tối đa 7 ngày để quản lý truy cập; IP bị chặn được giữ đến khi bỏ chặn. Không thu thập tên hay vị trí.';
+
+  const showBlocked = () => {
+    if (endpoint) location.replace(new URL('/blocked', endpoint).href);
+  };
+  async function checkAccess() {
+    if (document.hidden || !endpoint || new URL(endpoint).origin !== location.origin) return;
+    try {
+      const response = await fetch(new URL('/access', endpoint), { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(5000) });
+      if (response.status === 403 && (await response.json()).blocked === true) showBlocked();
+    } catch { /* A temporary network issue is not a block. */ }
+  }
+  let accessTimer;
+  function watchAccess() {
+    clearInterval(accessTimer);
+    if (!document.hidden && endpoint) { void checkAccess(); accessTimer = setInterval(checkAccess, 15000); }
+  }
+  document.addEventListener('visibilitychange', watchAccess);
+  window.addEventListener('pageshow', watchAccess);
+  window.addEventListener('pagehide', () => clearInterval(accessTimer));
+  watchAccess();
 
   const memory = new Set();
   const pending = new Map();
@@ -95,6 +115,7 @@
           keepalive: true, signal: controller.signal
         });
         const data = await result.json().catch(() => ({}));
+        if (result.status === 403 && data.blocked === true) { showBlocked(); return false; }
         if (result.ok && data.ok === true) {
           memory.add(event); storage.set(key, '1'); return true;
         }
