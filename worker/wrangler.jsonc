@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "personal-intro-notifications",
+  "main": "index.mjs",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "vars": {
+    "ALLOWED_ORIGIN": "https://volenguyen68.github.io"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "NOTIFICATIONS", "class_name": "NotificationQueue" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NotificationQueue"] }],
+  "ratelimits": [{
+    "name": "RATE_LIMITER",
+    "namespace_id": "1001",
+    "simple": { "limit": 12, "period": 60 }
+  }]
+}

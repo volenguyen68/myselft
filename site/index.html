@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#05080d">
+  <meta name="description" content="Xin chào, mình là Võ Lê Nguyên. Sinh ngày 06/08/2008, đang học tại Đại học Công nghiệp TP.HCM. Hãy kết bạn với mình nhé :DD">
+  <title>Võ Lê Nguyên — Xin chào.</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23050509'/%3E%3Cpath d='M20 16v32M20 31c0-12 22-12 22 0v17' fill='none' stroke='%23d6e8ff' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="preload" as="image" href="./assets/nguyen-portrait.png">
+  <link rel="preload" as="font" href="./assets/fonts/SVN-Jabana.otf" type="font/otf" crossorigin>
+  <script src="./config.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <div class="reading-progress" aria-hidden="true"></div>
+  <div class="page-shell">
+    <header class="masthead reveal">
+      <span class="wordmark">V  L  N<span>.</span></span>
+      <span class="masthead-caption">VÕ LÊ NGUYÊN</span>
+    </header>
+    <main class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow reveal" id="eyebrow">Một lời chào. Một kết nối mới.</p>
+        <p class="handwritten reveal" id="greeting">Xin chào</p>
+        <h1 id="headline" aria-label="Mình là Võ Lê Nguyên"><span class="name-intro">Mình là</span><span class="name-line" data-split>Võ Lê</span><span class="name-line name-color" data-split>Nguyên.</span></h1>
+        <p class="intro reveal" id="intro">Một góc nhỏ của mình.<br>Cuộn xuống và mình làm quen nhé.</p>
+        <p class="scroll-hint reveal"><span aria-hidden="true">↓</span> Cuộn xuống, còn một chút về mình.</p>
+      </div>
+      <figure class="artwork reveal" aria-label="Chân dung Võ Lê Nguyên được dựng theo phong cách 3D">
+        <div class="artwork-parallax" id="artwork">
+          <img src="./assets/nguyen-portrait.png" alt="Chân dung 3D của Nguyên với tóc đen, áo trắng, cầm điện thoại trước gương" width="2072" height="3106" fetchpriority="high" decoding="async">
+        </div>
+        <figcaption>Võ Lê Nguyên<span>Phiên bản của riêng mình.</span></figcaption>
+      </figure>
+    </main>
+    <section class="about" aria-labelledby="about-title">
+      <div class="about-heading">
+        <p class="eyebrow">01 / MỘT CHÚT VỀ MÌNH</p>
+        <h2 id="about-title">
+          <span class="about-name" data-scroll-reveal>Nguyên.</span>
+          <span class="about-description"><span class="story-line">Nhiều hơn</span> <span class="story-line">một cái tên.</span></span>
+        </h2>
+        <p class="handwritten about-signature" data-scroll-reveal>Rất vui được gặp bạn :DD</p>
+      </div>
+      <div class="about-detail">
+        <dl class="facts">
+          <div data-scroll-reveal><dt>Ngày sinh</dt><dd><time datetime="2008-08-06">06.08.2008</time></dd></div>
+          <div data-scroll-reveal><dt>Đang học tại</dt><dd>Đại học Công nghiệp<br>TP. Hồ Chí Minh</dd></div>
+        </dl>
+        <div class="social-links" id="social-links" aria-label="Các trang mạng xã hội" data-scroll-reveal>
+          <h3 class="social-label">Gặp mình ở đây</h3>
+          <div class="social-list"></div>
+        </div>
+        <div class="invitation" data-scroll-reveal>
+          <p id="invitation">Hãy kết bạn với mình để biết thêm về mình nhé :DD</p>
+          <div class="actions">
+            <button type="button" class="button button-secondary" id="later" data-choice="later">Để sau</button>
+            <button type="button" class="button button-primary" id="ok" data-choice="ok"><span>OK</span><svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
+          </div>
+          <p class="response" id="response" role="status" aria-live="polite" aria-atomic="true"></p>
+        </div>
+      </div>
+    </section>
+    <footer class="footer">
+      <span id="signature">Võ Lê Nguyên. Rất vui vì bạn đã ở đây.</span>
+      <span class="privacy" id="privacy">Một lời chào nhỏ. Một kết nối mới.</span>
+    </footer>
+  </div>
+  <noscript><p class="noscript">Hãy bật JavaScript để sử dụng hai nút chào hỏi.</p></noscript>
+</body>
+</html>

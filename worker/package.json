@@ -1,0 +1,9 @@
+{
+  "name": "nguyen-personal-notifications",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test index.test.mjs",
+    "deploy": "npx wrangler deploy"
+  }
+}
