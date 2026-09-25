@@ -2,18 +2,21 @@
 
 Website tiếng Việt lấy cảm hứng từ Apple, nền đen xanh với ánh sáng xanh lam và xanh ngọc. Chân dung dùng nguyên bản PNG 2072 × 3106 do Nguyên chọn, không chỉnh ảnh hoặc thêm khung. Chữ tên hiện lần lượt với chuyển động 3D, ánh bạc xanh lướt trên tên; hiệu ứng được phát lại khi cuộn về đầu. Phần giới thiệu sáng dần từng từ theo vị trí cuộn. Đây là ảnh chân dung có hiệu ứng nghiêng theo chuột, không phải mô hình 3D xoay tự do.
 
-Bản tương tác có nền hạt sáng, điểm sáng theo chuột, các ghi chú nổi quanh chân dung, dòng chữ chuyển động, liên kết mạng xã hội nghiêng nhẹ khi rê chuột và hạt sáng khi nhấn OK. Hiệu ứng tự giảm khi bật Reduce Motion và nền hạt dừng khi tab bị ẩn. Ảnh gốc và hai lời nhắn được giữ nguyên.
+Bản tương tác có nền hạt sáng, vệt sáng theo chuột, các ghi chú nổi và quỹ đạo ánh sáng quanh chân dung. Tên phản hồi khi rê chuột, lời mời xuất hiện lần lượt từng từ, dòng chữ và hạt sáng phản hồi theo nhịp cuộn. Liên kết mạng xã hội nghiêng nhẹ khi rê chuột; nhấn OK tạo vòng sáng và hạt sáng. Hiệu ứng tự giảm khi bật Reduce Motion và nền hạt dừng khi tab bị ẩn. Ảnh gốc và hai lời nhắn được giữ nguyên.
 
 Thông tin được dùng theo yêu cầu:
 
 - Võ Lê Nguyên, sinh ngày 06/08/2008.
 - Đang học tại Đại học Công nghiệp TP. Hồ Chí Minh.
 - Facebook và Locket nằm cùng phần giới thiệu; Instagram và Threads hiển thị `....` để thêm sau.
-- Chỉ có hai nút: **Để sau** → “có duyên gặp lại nhé”; **OK** → “kết bạn ngay nào bạn ơi”.
+- Chữ ký cá nhân **vln** và dấu tròn tên/ngày sinh xuất hiện xuyên suốt giao diện; phần cá nhân hóa nằm trong `site/personal.css`. Logo **VLN** có quỹ đạo ánh sáng lấy chữ **L** làm tâm. Hình Sư Tử đi bộ cùng các đường nối sao phát sáng nằm cạnh chân dung trên máy tính, phía trên chân dung trên điện thoại.
+- Ngày sinh và tên trường dùng DM Serif Display đứng, hiện lần lượt từng chữ số/từ khi cuộn đến và có ánh sáng lướt qua; hiệu ứng phát lại khi rời rồi cuộn về. Nội dung vẫn hiển thị khi tắt JavaScript hoặc bật giảm chuyển động.
+- Chỉ có hai nút: **Để sau** → “có duyên gặp lại nhé”; **OK** → “kết bạn ngay nào bạn ơi” và mở Facebook đã cấu hình ở tab mới.
+- Khi chọn **Để sau**, lần mở trang kế tiếp hiện “Chào mừng quay trở lại, bạn muốn kết bạn với tớ chưa?”. Lựa chọn được nhớ bằng một cờ `localStorage` trên cùng trình duyệt và cùng địa chỉ website, không dựa trên IP. **OK** xóa cờ này. Nếu khách xóa dữ liệu trình duyệt hoặc chặn lưu trữ thì lời nhắc không được giữ lại.
 
 ## Website và trang quản trị
 
-Font được nhúng trực tiếp trong `site/assets/fonts/`: Inter Variable 4.1 cho tên và nội dung, SVN-Jabana cho chữ viết tay. Trình duyệt tự tải bản WOFF2, không cần khách cài font trên máy hoặc kết nối tới dịch vụ font bên ngoài. Jabana có OTF dự phòng; hai font được preload trong HTML. Inter kèm giấy phép tại `site/assets/fonts/Inter-LICENSE.txt` và nguồn chính thức https://rsms.me/inter/.
+Font được nhúng trực tiếp trong `site/assets/fonts/`: Inter Variable 4.1 cho nội dung, SVN-DMSerif Display cho ngày sinh và trường học, SVN-DMSerif Display Italic cho chữ nhấn và SVN-Jabana cho lời chào viết tay. Trình duyệt tự tải Inter và Jabana dạng WOFF2, DM Serif dạng OTF, không cần khách cài font trên máy hoặc kết nối tới dịch vụ font bên ngoài. Inter và DM Serif được preload trong HTML; Jabana có OTF dự phòng. Inter kèm giấy phép tại `site/assets/fonts/Inter-LICENSE.txt` và nguồn chính thức https://rsms.me/inter/.
 
 - Website chính: [Trang của Nguyên](https://personal-intro-notifications.volenguyen68.workers.dev/).
 - Quản trị riêng: [Quản lý truy cập](https://personal-intro-notifications.volenguyen68.workers.dev/admin), yêu cầu mật khẩu.
