@@ -40,7 +40,9 @@ export function classifyDevice(userAgent) {
 const json = (value, status = 200, headers = {}) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 const visitorId = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value) ? value : '';
 const adminHeaders = nonce => ({
-  'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff',
+  // Native login/logout form POSTs need their same-origin Origin header.
+  // no-referrer turns it into "null"; same-origin still hides referrers from other sites.
+  'Cache-Control': 'no-store', 'Referrer-Policy': 'same-origin', 'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY', 'X-Robots-Tag': 'noindex, nofollow',
   'Content-Security-Policy': `default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`
 });

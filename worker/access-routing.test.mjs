@@ -106,6 +106,7 @@ test('unauthenticated admin redirects to login with visit, login renders, and JS
   assert.equal(admin.headers.get('Location'), '/admin/login?visit=' + visitId);
   const login = await worker.fetch(request('/admin/login?visit=' + visitId), env);
   assert.equal(login.status, 200);
+  assert.equal(login.headers.get('Referrer-Policy'), 'same-origin', 'native form POST must retain its Origin');
   assert.match(await login.text(), /name="password"/);
   const api = await worker.fetch(request('/admin/api/visitors'), env);
   assert.equal(api.status, 401);
@@ -120,6 +121,7 @@ test('login sets a Secure HttpOnly SameSite host cookie and preserves only a val
   const response = await worker.fetch(loginRequest(), env);
   assert.equal(response.status, 303);
   assert.equal(response.headers.get('Location'), '/admin?visit=' + visitId);
+  assert.equal(response.headers.get('Referrer-Policy'), 'same-origin');
   const cookie = response.headers.get('Set-Cookie');
   assert.ok(cookie.startsWith('__Host-nguyen-admin='));
   for (const attribute of ['Path=/', 'Secure', 'HttpOnly', 'SameSite=Lax', 'Max-Age=43200']) assert.ok(cookie.split('; ').includes(attribute), attribute);
@@ -178,7 +180,7 @@ test('opening a visitor notification link never blocks, even with an authenticat
   const nonce = html.match(/<script nonce="([a-f0-9]+)">/)?.[1];
   assert.ok(nonce);
   assert.ok(response.headers.get('Content-Security-Policy').includes("script-src 'nonce-" + nonce + "'"));
-  assert.equal(response.headers.get('Referrer-Policy'), 'no-referrer');
+  assert.equal(response.headers.get('Referrer-Policy'), 'same-origin');
   assertNoDelivery(calls);
 });
 
@@ -239,6 +241,7 @@ test('logout requires POST and clears the host session cookie', async () => {
   const logout = await worker.fetch(request('/admin/logout', { method: 'POST', cookie }), env);
   assert.equal(logout.status, 303);
   assert.equal(logout.headers.get('Location'), '/admin/login');
+  assert.equal(logout.headers.get('Referrer-Policy'), 'same-origin');
   assert.match(logout.headers.get('Set-Cookie'), /^__Host-nguyen-admin=; Path=\/; Max-Age=0; Secure; HttpOnly; SameSite=Lax$/);
   assertNoDelivery(calls);
 });
