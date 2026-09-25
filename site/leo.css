@@ -1,0 +1,58 @@
+/* The lion keeps its own clear space; the original portrait stays untouched. */
+.artwork .note-birthday { top: -3%; }
+.artwork .portrait-aura { inset: 0; }
+.leo-constellation {
+  position: absolute;
+  left: -5%;
+  top: 8%;
+  width: 42%;
+  aspect-ratio: 3 / 2;
+  pointer-events: none;
+  user-select: none;
+  animation: leo-arrive 1.4s ease-out both;
+}
+.artwork .leo-constellation > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  object-fit: contain;
+  opacity: .95;
+}
+.lion-star-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.leo-network { stroke: #f0dfac; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; opacity: .8; }
+.leo-trail {
+  stroke: #fff9df;
+  stroke-width: 10.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 80 920;
+  filter: drop-shadow(0 0 8px rgba(244, 222, 158, .65));
+  animation: leo-star-flow 11s linear infinite;
+  animation-delay: calc(var(--trail-index) * -3.7s);
+}
+.leo-star { animation: leo-star-glow 4.5s ease-in-out infinite; animation-delay: calc(var(--star-index) * -.48s); }
+.leo-star-halo { fill: #f9df91; opacity: .11; }
+.leo-star-core { fill: #fffbed; }
+.hero:not(.scene-active) .leo-constellation,
+.hero:not(.scene-active) .leo-trail,
+.hero:not(.scene-active) .leo-star { animation-play-state: paused; }
+@keyframes leo-arrive { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+@keyframes leo-star-flow { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+@keyframes leo-star-glow { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@media (max-width: 700px) {
+  .leo-constellation { left: 0; top: 0; width: 62%; }
+  .artwork-parallax { padding-top: 150px; }
+  .artwork .personal-seal { top: 0; right: 3%; }
+  .artwork .note-birthday { top: 99px; right: 3%; left: auto; }
+}
+@media (max-width: 360px) {
+  .artwork-parallax { padding-top: 135px; }
+  .artwork .note-birthday { top: 89px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .leo-constellation, .leo-trail, .leo-star { animation: none; }
+  .leo-trail { display: none; }
+  .leo-star { opacity: .8; }
+}

@@ -6,23 +6,39 @@
     if (typeof config[field] === 'string' && config[field].trim()) $(field).textContent = config[field];
   }
   const socialList = document.querySelector('.social-list');
+  let facebookUrl = null;
   if (socialList && Array.isArray(config.socials)) {
     socialList.replaceChildren();
-    config.socials.filter(item => item && typeof item.label === 'string').forEach(item => {
+    config.socials.filter(item => item && typeof item.label === 'string').forEach((item, index) => {
       let href = null;
       try {
         const url = new URL(item.href);
         if (url.protocol === 'https:' && !url.username && !url.password) href = url.href;
       } catch { /* An empty URL is a visible, non-interactive placeholder. */ }
+      if (href && (item.kind === 'facebook' || item.label === 'Facebook')) facebookUrl = href;
       const entry = document.createElement(href ? 'a' : 'div');
       entry.className = `social-item${href ? '' : ' social-placeholder'}`;
+      if (['facebook', 'locket', 'instagram', 'threads'].includes(item.kind)) entry.classList.add(`social-${item.kind}`);
+      const number = document.createElement('span');
+      number.className = 'social-index'; number.textContent = String(index + 1).padStart(2, '0'); number.setAttribute('aria-hidden', 'true');
       if (href) { entry.href = href; entry.target = '_blank'; entry.rel = 'noopener noreferrer'; }
       const icon = document.createElement('span');
       icon.className = 'social-mark'; icon.textContent = item.mark || '↗'; icon.setAttribute('aria-hidden', 'true');
       const content = document.createElement('span'); content.className = 'social-content';
       const label = document.createElement('span'); label.className = 'social-name'; label.textContent = item.label;
-      const detail = document.createElement('span'); detail.className = 'social-detail'; detail.textContent = href ? 'Kết nối cùng mình' : '....';
-      content.append(label, detail); entry.append(icon, content);
+      const detail = document.createElement('span'); detail.className = 'social-detail'; detail.textContent = href ? (item.detail || 'Kết nối cùng mình') : '....';
+      content.append(label, detail); entry.append(number, icon, content);
+      if (item.kind === 'locket' && href) {
+        const signature = document.createElement('span');
+        signature.className = 'locket-signature'; signature.setAttribute('aria-hidden', 'true');
+        Array.from('vln').forEach((character, index) => {
+          const letter = document.createElement('span');
+          letter.className = 'locket-letter'; letter.textContent = character;
+          letter.style.setProperty('--letter-index', index);
+          signature.append(letter);
+        });
+        entry.append(signature);
+      }
       if (href) { const arrow = document.createElement('span'); arrow.className = 'social-arrow'; arrow.textContent = '↗'; arrow.setAttribute('aria-hidden', 'true'); entry.append(arrow); }
       socialList.append(entry);
     });
@@ -60,12 +76,42 @@
       return index ? [document.createTextNode(' '), span] : [span];
     }));
   });
+  document.querySelectorAll('[data-kinetic]').forEach(heading => {
+    const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    heading.setAttribute('aria-label', heading.innerText.replace(/\s+/g, ' ').trim());
+    let index = 0;
+    nodes.forEach(node => {
+      const fragment = document.createDocumentFragment();
+      node.textContent.split(/(\s+)/).forEach(word => {
+        if (!word.trim()) { fragment.append(document.createTextNode(word)); return; }
+        const span = document.createElement('span');
+        span.className = 'kinetic-word'; span.textContent = word;
+        span.setAttribute('aria-hidden', 'true');
+        span.style.setProperty('--word-index', index++);
+        fragment.append(span);
+      });
+      node.replaceWith(fragment);
+    });
+  });
+  // Remember only the visitor's choice on this browser; no identity is stored here.
+  const laterChoiceKey = 'hello:later:v1';
+  const returningGreeting = $('returning-greeting');
+  const choiceStorage = {
+    get() { try { return localStorage.getItem(laterChoiceKey) === '1'; } catch { return false; } },
+    set(later) { try { if (later) localStorage.setItem(laterChoiceKey, '1'); else localStorage.removeItem(laterChoiceKey); } catch { /* The page still works when browser storage is unavailable. */ } }
+  };
+  const updateReturningGreeting = () => {
+    if (returningGreeting) returningGreeting.hidden = !choiceStorage.get();
+  };
+  updateReturningGreeting();
+  window.addEventListener('pageshow', updateReturningGreeting);
   let endpoint = null;
   try {
     const url = new URL(config.notificationEndpoint);
     if (location.protocol === 'https:' && url.protocol === 'https:' && !url.username && !url.password) endpoint = url.href;
   } catch { /* Notifications stay off until a valid endpoint is configured. */ }
-  if (endpoint) $('privacy').textContent = 'Lượt mở trang, loại thiết bị và lựa chọn được báo cho chủ trang. IP được lưu tối đa 7 ngày để quản lý truy cập; IP bị chặn được giữ đến khi bỏ chặn. Không thu thập tên hay vị trí.';
 
   const showBlocked = () => {
     if (endpoint) location.replace(new URL('/blocked', endpoint).href);
@@ -131,6 +177,12 @@
   document.querySelectorAll('[data-choice]').forEach(button => {
     button.addEventListener('click', () => {
       selection = button.dataset.choice;
+      choiceStorage.set(selection === 'later');
+      if (selection === 'ok') {
+        if (returningGreeting) returningGreeting.hidden = true;
+        // Open synchronously from the click so browsers retain the user gesture.
+        if (facebookUrl) window.open(facebookUrl, '_blank', 'noopener,noreferrer');
+      }
       document.body.classList.toggle('said-hello', selection === 'ok');
       $('response').textContent = selection === 'ok'
         ? config.okMessage || 'Rất vui được làm quen với bạn!'

@@ -4,16 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#05080d">
-  <meta name="description" content="Xin chào, mình là Võ Lê Nguyên. Sinh ngày 06/08/2008, đang học tại Đại học Công nghiệp TP.HCM. Hãy kết bạn với mình nhé :DD">
+  <meta name="description" content="Xin chào, mình là Võ Lê Nguyên. Sinh ngày 06/08/2008, đang học tại Đại học Công nghiệp TP.HCM. Hãy kết bạn với mình nhé.">
   <title>Võ Lê Nguyên — Xin chào.</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23050509'/%3E%3Cpath d='M20 16v32M20 31c0-12 22-12 22 0v17' fill='none' stroke='%23d6e8ff' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20260925-fonts">
+  <link rel="stylesheet" href="./styles.css?v=20260926-preview-3">
+  <link rel="stylesheet" href="./personal.css?v=20260926-wordmark-orbit-3">
+  <link rel="stylesheet" href="./facts.css?v=20260926-serif-2">
+  <link rel="stylesheet" href="./leo.css?v=20260926-walking-2">
   <link rel="preload" as="image" href="./assets/nguyen-portrait.png">
   <link rel="preload" as="font" href="./assets/fonts/InterVariable-4.1.woff2" type="font/woff2" crossorigin>
-  <link rel="preload" as="font" href="./assets/fonts/SVN-Jabana.woff2" type="font/woff2" crossorigin>
-  <script src="./config.js" defer></script>
-  <script src="./app.js" defer></script>
-  <script src="./effects.js" defer></script>
+  <link rel="preload" as="font" href="./assets/fonts/SVN-DMSerif-DisplayItalic.otf" type="font/otf" crossorigin>
+  <script src="./config.js?v=20260926-facts-1" defer></script>
+  <script src="./app.js?v=20260926-locket-1" defer></script>
+  <script src="./facts.js?v=20260926-facts-1" defer></script>
+  <script src="./effects.js?v=20260926-preview-3" defer></script>
 </head>
 <body>
   <div class="ambient" aria-hidden="true"></div>
@@ -23,31 +27,77 @@
   <div class="reading-progress" aria-hidden="true"></div>
   <div class="page-shell">
     <header class="masthead reveal">
-      <span class="wordmark">V  L  N<span>.</span></span>
-      <span class="masthead-caption"><i aria-hidden="true"></i> MỘT GÓC NHỎ CỦA NGUYÊN</span>
+      <span class="wordmark" role="img" aria-label="Võ Lê Nguyên, 06 tháng 08">
+        <span class="wordmark-emblem" aria-hidden="true">
+          <span class="wordmark-letters">
+            <span class="wordmark-glyph">V</span>
+            <span class="wordmark-center">
+              <svg class="wordmark-orbit wordmark-orbit-back" viewBox="0 0 128 68" fill="none" aria-hidden="true" focusable="false">
+                <g transform="rotate(-18 64 34)">
+                  <ellipse class="wordmark-orbit-track" cx="64" cy="34" rx="56" ry="19"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-haze" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-trail" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-lead" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-light" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                </g>
+              </svg>
+              <span class="wordmark-glyph">L</span>
+              <svg class="wordmark-orbit wordmark-orbit-front" viewBox="0 0 128 68" fill="none" aria-hidden="true" focusable="false">
+                <g transform="rotate(-18 64 34)">
+                  <ellipse class="wordmark-orbit-track" cx="64" cy="34" rx="56" ry="19"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-haze" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-trail" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-lead" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                  <ellipse class="wordmark-orbit-tail wordmark-orbit-light" cx="64" cy="34" rx="56" ry="19" pathLength="1000"/>
+                </g>
+              </svg>
+            </span>
+            <span class="wordmark-glyph">N</span>
+          </span>
+        </span>
+        <small aria-hidden="true">06 / 08</small>
+      </span>
+      <span class="masthead-caption"><i aria-hidden="true"></i> NGUYÊN Ở ĐÂY</span>
     </header>
     <main class="hero">
       <div class="hero-watermark" aria-hidden="true">NGUYÊN</div>
       <div class="hero-copy">
-        <p class="eyebrow reveal" id="eyebrow">Một lời chào. Một kết nối mới.</p>
-        <p class="handwritten reveal" id="greeting">Xin chào<span class="hello-star" aria-hidden="true">✳</span></p>
+        <p class="returning-greeting" id="returning-greeting" role="status" hidden>Chào mừng quay trở lại, bạn muốn kết bạn với tớ chưa?</p>
+        <p class="eyebrow personal-edition reveal" id="eyebrow">VÕ LÊ NGUYÊN / GÓC NHỎ CỦA MÌNH</p>
+        <p class="handwritten reveal" id="greeting">Xin chào, bạn!<span class="hello-star" aria-hidden="true">✳</span></p>
         <h1 id="headline" aria-label="Mình là Võ Lê Nguyên"><span class="name-intro">Mình là</span><span class="name-line" data-split>Võ Lê</span><span class="name-line name-color" data-split>Nguyên.</span></h1>
-        <p class="intro reveal" id="intro">Một góc nhỏ của mình.<br>Cuộn xuống và mình làm quen nhé.</p>
+        <p class="personal-tagline reveal"><span>Nguyên ở đây.</span><i>Rất vui vì bạn ghé qua.</i></p>
+        <p class="intro reveal" id="intro">Đây là một chút về mình.<br>Cuộn xuống, rồi mình kết bạn nhé.</p>
+        <div class="hero-chips reveal"><span><i aria-hidden="true"></i> 06.08.2008</span><span>TP. HỒ CHÍ MINH</span></div>
         <p class="scroll-hint reveal"><span aria-hidden="true">↓</span> Cuộn xuống, còn một chút về mình.</p>
       </div>
       <figure class="artwork reveal" aria-label="Chân dung Võ Lê Nguyên được dựng theo phong cách 3D">
+        <div class="portrait-aura" aria-hidden="true">
+          <div class="leo-constellation">
+            <img src="./assets/leo-walking-constellation.png" alt="" width="1536" height="1024">
+            <svg class="lion-star-lines" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024" width="1536" height="1024" fill="none" aria-hidden="true" focusable="false">
+              <g class="leo-network"><path d="M466 542L699 389L970 446L1016 341L1195 259L1246 342L1335 385L1390 251"/><path d="M970 446L1080 547L1077 677L1335 767"/><path d="M466 542L648 547L1077 677M648 547L584 692L618 819"/></g>
+              <g><path class="leo-trail" pathLength="1000" d="M466 542L699 389L970 446L1016 341L1195 259L1246 342L1335 385L1390 251" style="--trail-index:0"/><path class="leo-trail" pathLength="1000" d="M970 446L1080 547L1077 677L1335 767" style="--trail-index:1"/><path class="leo-trail" pathLength="1000" d="M466 542L648 547L1077 677M648 547L584 692L618 819" style="--trail-index:2"/></g>
+              <g><g class="leo-star" style="--star-index:0"><circle class="leo-star-halo" cx="466" cy="542" r="25"/><circle class="leo-star-core" cx="466" cy="542" r="5"/></g><g class="leo-star" style="--star-index:1"><circle class="leo-star-halo" cx="699" cy="389" r="25"/><circle class="leo-star-core" cx="699" cy="389" r="5"/></g><g class="leo-star" style="--star-index:2"><circle class="leo-star-halo" cx="970" cy="446" r="25"/><circle class="leo-star-core" cx="970" cy="446" r="5"/></g><g class="leo-star" style="--star-index:3"><circle class="leo-star-halo" cx="1016" cy="341" r="25"/><circle class="leo-star-core" cx="1016" cy="341" r="5"/></g><g class="leo-star" style="--star-index:4"><circle class="leo-star-halo" cx="1195" cy="259" r="25"/><circle class="leo-star-core" cx="1195" cy="259" r="5"/></g><g class="leo-star" style="--star-index:5"><circle class="leo-star-halo" cx="1246" cy="342" r="25"/><circle class="leo-star-core" cx="1246" cy="342" r="5"/></g><g class="leo-star" style="--star-index:6"><circle class="leo-star-halo" cx="1335" cy="385" r="25"/><circle class="leo-star-core" cx="1335" cy="385" r="5"/></g><g class="leo-star" style="--star-index:7"><circle class="leo-star-halo" cx="1390" cy="251" r="25"/><circle class="leo-star-core" cx="1390" cy="251" r="5"/></g><g class="leo-star" style="--star-index:8"><circle class="leo-star-halo" cx="1080" cy="547" r="25"/><circle class="leo-star-core" cx="1080" cy="547" r="5"/></g><g class="leo-star" style="--star-index:9"><circle class="leo-star-halo" cx="1077" cy="677" r="25"/><circle class="leo-star-core" cx="1077" cy="677" r="5"/></g><g class="leo-star" style="--star-index:10"><circle class="leo-star-halo" cx="1335" cy="767" r="25"/><circle class="leo-star-core" cx="1335" cy="767" r="5"/></g><g class="leo-star" style="--star-index:11"><circle class="leo-star-halo" cx="648" cy="547" r="25"/><circle class="leo-star-core" cx="648" cy="547" r="5"/></g><g class="leo-star" style="--star-index:12"><circle class="leo-star-halo" cx="584" cy="692" r="25"/><circle class="leo-star-core" cx="584" cy="692" r="5"/></g><g class="leo-star" style="--star-index:13"><circle class="leo-star-halo" cx="618" cy="819" r="25"/><circle class="leo-star-core" cx="618" cy="819" r="5"/></g></g>
+            </svg>
+          </div>
+        </div>
         <div class="portrait-note note-birthday" aria-hidden="true"><span>EST.</span><strong>2008</strong><i>06 tháng 08</i></div>
-        <div class="portrait-note note-hello" aria-hidden="true"><span>MỘT PHIÊN BẢN</span><strong>của riêng mình.</strong><i>✦</i></div>
+        <div class="personal-seal" aria-hidden="true">
+          <svg class="seal-ring" viewBox="0 0 120 120"><defs><path id="seal-circle" d="M60,60 m-45,0 a45,45 0 1,1 90,0 a45,45 0 1,1 -90,0"/></defs><text><textPath href="#seal-circle" textLength="282">VÕ LÊ NGUYÊN · 06.08.2008 · </textPath></text></svg>
+          <span class="seal-signature">vln</span>
+        </div>
+        <div class="portrait-autograph" aria-hidden="true"><span>vln</span><svg class="autograph-arrow" viewBox="0 0 110 85" fill="none"><path d="M103 73C65 83 70 19 32 23C14 25 23 53 38 39C46 31 37 16 12 8m0 0 5 17m-5-17 19 1"/></svg></div>
         <div class="artwork-parallax" id="artwork">
           <img src="./assets/nguyen-portrait.png" alt="Chân dung 3D của Nguyên với tóc đen, áo trắng, cầm điện thoại trước gương" width="2072" height="3106" fetchpriority="high" decoding="async">
         </div>
-        <figcaption><span class="caption-line" aria-hidden="true"></span> Võ Lê Nguyên <span>Được là chính mình.</span></figcaption>
+        <figcaption><span class="caption-line" aria-hidden="true"></span> Võ Lê Nguyên <span>Một tấm ảnh. Một lời chào.</span></figcaption>
       </figure>
     </main>
     <div class="connection-band" aria-hidden="true">
       <div class="connection-track">
-        <span>MỘT LỜI CHÀO <i>✦</i> MỘT KẾT NỐI MỚI <i>✦</i> RẤT VUI ĐƯỢC GẶP BẠN <i>✦</i>&nbsp;</span>
-        <span>MỘT LỜI CHÀO <i>✦</i> MỘT KẾT NỐI MỚI <i>✦</i> RẤT VUI ĐƯỢC GẶP BẠN <i>✦</i>&nbsp;</span>
+        <span>VÕ LÊ NGUYÊN <i>✦</i> 06 THÁNG 08 <i>✦</i> KẾT BẠN NHÉ <i>✦</i>&nbsp;</span>
+        <span>VÕ LÊ NGUYÊN <i>✦</i> 06 THÁNG 08 <i>✦</i> KẾT BẠN NHÉ <i>✦</i>&nbsp;</span>
       </div>
     </div>
     <section class="about" aria-labelledby="about-title">
@@ -57,26 +107,32 @@
           <span class="about-name" data-scroll-reveal>Nguyên.</span>
           <span class="about-description"><span class="story-line">Nhiều hơn</span> <span class="story-line">một cái tên.</span></span>
         </h2>
-        <p class="handwritten about-signature" data-scroll-reveal>Rất vui được gặp bạn :DD</p>
+        <p class="handwritten about-signature" data-scroll-reveal>Rất vui được gặp bạn.</p>
+        <aside class="personal-note" data-scroll-reveal aria-label="Một lời nhắn từ Nguyên">
+          <span class="note-label">MỘT LỜI NHẮN TỪ NGUYÊN</span>
+          <p>Trang này là lời chào của mình.<br>Còn câu chuyện phía sau, mình kể khi làm quen nhé.</p>
+          <span class="note-signature" aria-label="Chữ ký vln">vln</span>
+        </aside>
       </div>
       <div class="about-detail">
         <dl class="facts">
-          <div data-scroll-reveal><dt>Ngày sinh</dt><dd><time datetime="2008-08-06">06.08.2008</time></dd></div>
-          <div data-scroll-reveal><dt>Đang học tại</dt><dd>Đại học Công nghiệp<br>TP. Hồ Chí Minh</dd></div>
+          <div class="fact-item" data-fact><dt>Ngày sinh</dt><dd><time datetime="2008-08-06" data-fact-digits>06.08.2008</time></dd></div>
+          <div class="fact-item" data-fact><dt>Đang học tại</dt><dd data-fact-school><span class="fact-school-line" data-fact-words>Đại học Công nghiệp</span><br><span class="fact-school-line" data-fact-words>TP. Hồ Chí Minh</span></dd></div>
         </dl>
         <div class="social-links" id="social-links" aria-label="Các trang mạng xã hội" data-scroll-reveal>
-          <h3 class="social-label">Gặp mình ở đây</h3>
+          <h3 class="social-label">Ra khỏi trang này, gặp mình ở…</h3>
           <div class="social-list"></div>
         </div>
       </div>
       <div class="invitation" data-scroll-reveal>
+        <div class="invitation-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
         <div class="invitation-copy">
-          <p class="eyebrow">02 / MỘT KẾT NỐI MỚI</p>
-          <h3>Bắt đầu bằng<br><span>một lời chào.</span></h3>
-          <p id="invitation">Hãy kết bạn với mình để biết thêm về mình nhé :DD</p>
+          <p class="eyebrow">02 / TỪ NGƯỜI LẠ THÀNH BẠN</p>
+          <h3 data-kinetic>Biết tên rồi,<br><span>kết bạn nhé?</span></h3>
+          <p id="invitation">Hãy kết bạn với mình để biết thêm về mình nhé.</p>
         </div>
         <div class="invitation-action">
-          <span class="invitation-spark" aria-hidden="true">✳</span>
+          <span class="invitation-spark invitation-signature" aria-hidden="true">vln</span>
           <div class="actions">
             <button type="button" class="button button-secondary" id="later" data-choice="later">Để sau</button>
             <button type="button" class="button button-primary" id="ok" data-choice="ok"><span>OK</span><svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></button>
@@ -86,6 +142,7 @@
       </div>
     </section>
     <footer class="footer">
+      <span class="footer-monogram" aria-label="Chữ ký vln">vln<svg viewBox="0 0 100 16" aria-hidden="true" fill="none"><path d="M3 10C26 3 75 4 96 8M24 14C42 10 69 11 80 13"/></svg></span>
       <span id="signature">Võ Lê Nguyên. Rất vui vì bạn đã ở đây.</span>
       <span class="privacy" id="privacy">Một lời chào nhỏ. Một kết nối mới.</span>
     </footer>
