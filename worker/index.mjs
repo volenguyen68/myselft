@@ -3,6 +3,36 @@ const EVENTS = Object.freeze({
   later: '🌙 Có người vừa nhấn “Để sau”.',
   ok: '✨ Có người vừa nhấn “OK” — một lời chào mới!'
 });
+const DEVICE_LABELS = Object.freeze({
+  iphone: 'iPhone',
+  ipad_ipod: 'iPad / iPod',
+  android_phone: 'Điện thoại Android',
+  android_tablet: 'Máy tính bảng Android',
+  windows: 'Máy tính Windows (Laptop/PC)',
+  mac: 'Máy tính Mac',
+  linux: 'Máy tính Linux',
+  chromebook: 'Chromebook',
+  mobile: 'Thiết bị di động',
+  unknown: 'Không xác định'
+});
+const deviceCode = value => typeof value === 'string' && Object.hasOwn(DEVICE_LABELS, value) ? value : 'unknown';
+
+// User-Agent is only a hint: desktop-mode iPads can look like Macs, and laptop/PC is indistinguishable.
+// Return a fixed code only; never persist or forward the original header.
+export function classifyDevice(userAgent) {
+  if (typeof userAgent !== 'string') return 'unknown';
+  const ua = userAgent.slice(0, 1024);
+  if (/\bWindows (?:Phone|Mobile)\b/i.test(ua)) return 'mobile';
+  if (/\biPad\b|\biPod\b/i.test(ua)) return 'ipad_ipod';
+  if (/\biPhone\b/i.test(ua)) return 'iphone';
+  if (/\bAndroid\b/i.test(ua)) return /\bMobile\b/i.test(ua) ? 'android_phone' : 'android_tablet';
+  if (/\bCrOS\b/i.test(ua)) return 'chromebook';
+  if (/\bWindows\b/i.test(ua)) return 'windows';
+  if (/\bMacintosh\b|\bMac OS X\b/i.test(ua)) return 'mac';
+  if (/\bMobile\b|\bMobi\b|\bTablet\b|\bwebOS\b|\bBlackBerry\b|\bBB10\b|\bOpera Mini\b/i.test(ua)) return 'mobile';
+  if (/\bLinux\b/i.test(ua)) return 'linux';
+  return 'unknown';
+}
 const json = (value, status = 200, headers = {}) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 
 export async function readEvent(request) {
@@ -43,13 +73,14 @@ export default {
     if (!env.PUSHOVER_APP_TOKEN || !env.PUSHOVER_USER_KEY || !env.NOTIFICATIONS || !env.RATE_LIMITER) return json({ ok: false, error: 'not_configured' }, 503, headers);
     let data;
     try { data = await readEvent(request); } catch (status) { return json({ ok: false }, typeof status === 'number' ? status : 400, headers); }
+    const device = classifyDevice(request.headers.get('User-Agent'));
     // IP is used only by the short-lived rate limiter, never stored in records or sent to Pushover.
     const limit = await env.RATE_LIMITER.limit({ key: request.headers.get('CF-Connecting-IP') || 'unknown' });
     if (!limit.success) return json({ ok: false, error: 'rate_limited' }, 429, { ...headers, 'Retry-After': '60' });
     try {
       const id = env.NOTIFICATIONS.idFromName('personal-intro-inbox');
       const result = await env.NOTIFICATIONS.get(id).fetch(new Request('https://queue.local/events', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...data, device })
       }));
       return new Response(result.body, { status: result.status, headers: { ...Object.fromEntries(result.headers), ...headers } });
     } catch { return json({ ok: false, error: 'unavailable' }, 503, headers); }
@@ -66,7 +97,7 @@ export class NotificationQueue {
   }
   fetch(request) {
     return this.serial(async () => {
-      const { sessionId, event } = await request.json();
+      const { sessionId, event, device } = await request.json();
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${sessionId}:${event}`));
       const key = [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, '0')).join('');
       const now = Date.now();
@@ -78,7 +109,7 @@ export class NotificationQueue {
       if (state.minute !== minute) { state.minute = minute; state.count = 0; }
       if (state.count >= 20 || state.queue.length >= 50 || Object.keys(state.records).length >= 400) return json({ ok: false, error: 'rate_limited' }, 429);
       state.count++;
-      state.records[key] = { event, time: now, expiresAt: now + 86400000, status: 'queued', attempts: 0 };
+      state.records[key] = { event, device: deviceCode(device), time: now, expiresAt: now + 86400000, status: 'queued', attempts: 0 };
       const wasIdle = state.queue.length === 0;
       state.queue.push(key);
       // Set alarm before state: storage output gates prevent an acknowledged event without its alarm.
@@ -104,7 +135,7 @@ export class NotificationQueue {
         try {
           const response = await fetch('https://api.pushover.net/1/messages.json', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: this.env.PUSHOVER_APP_TOKEN, user: this.env.PUSHOVER_USER_KEY, device: this.env.PUSHOVER_DEVICE || undefined, title: 'Website của Nguyên', priority: 0, message: `${EVENTS[record.event]}\n🕒 ${time} (Việt Nam)` }),
+            body: JSON.stringify({ token: this.env.PUSHOVER_APP_TOKEN, user: this.env.PUSHOVER_USER_KEY, device: this.env.PUSHOVER_DEVICE || undefined, title: 'Website của Nguyên', priority: 0, message: `${EVENTS[record.event]}\nThiết bị (ước đoán): ${DEVICE_LABELS[deviceCode(record.device)]}\n🕒 ${time} (Việt Nam)` }),
             signal: AbortSignal.timeout(8000)
           });
           const data = await response.json();

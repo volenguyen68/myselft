@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { NotificationQueue } from './index.mjs';
+import worker, { classifyDevice, NotificationQueue } from './index.mjs';
 
 const origin = 'https://volenguyen68.github.io';
 const sessionId = '12345678-1234-1234-1234-123456789abc';
 const event = (choice = 'ok', extra = {}) => ({ event: choice, sessionId, ...extra });
-const request = (payload, options = {}) => new Request('https://example.test/events', {
-  method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...options.headers },
+const request = (payload, { headers = {}, ...options } = {}) => new Request('https://example.test/events', {
+  method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers },
   body: typeof payload === 'string' ? payload : JSON.stringify(payload), ...options
 });
 const envFor = () => {
@@ -19,6 +19,27 @@ const envFor = () => {
     } }) }
   } };
 };
+test('device classification returns fixed approximate codes for representative browser headers', () => {
+  const examples = [
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1', 'iphone'],
+    ['Mozilla/5.0 (iPad; CPU OS 17_6 like Mac OS X) AppleWebKit/605.1.15 Version/17.6 Mobile/15E148 Safari/604.1', 'ipad_ipod'],
+    ['Mozilla/5.0 (iPod touch; CPU iPhone OS 15_8 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148', 'ipad_ipod'],
+    ['Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0.0.0 Mobile Safari/537.36', 'android_phone'],
+    ['Mozilla/5.0 (Linux; Android 14; SM-X810) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36', 'android_tablet'],
+    ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36', 'windows'],
+    ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15', 'mac'],
+    ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36', 'linux'],
+    ['Mozilla/5.0 (X11; CrOS x86_64 15917.65.0) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36', 'chromebook'],
+    ['Mozilla/5.0 (Windows Phone 10.0; Android 6.0.1; Microsoft; Lumia 950) AppleWebKit/537.36 Chrome/52.0.2743.116 Mobile Safari/537.36 Edge/15.15063', 'mobile'],
+    ['Mozilla/5.0 (BB10; Touch) AppleWebKit/537.35 Version/10.3.0.1337 Mobile Safari/537.35', 'mobile'],
+    ['Mozilla/5.0 (Linux; Mobile) Gecko/18.0 Firefox/18.0', 'mobile'],
+    ['Mozilla/5.0 (X11; CrOS Linux x86_64) AppleWebKit/537.36', 'chromebook'],
+    ['IPHONE', 'iphone'],
+    ['', 'unknown'], [null, 'unknown'], [undefined, 'unknown'], ['toString', 'unknown'],
+    [`${'x'.repeat(1024)} iPhone`, 'unknown']
+  ];
+  for (const [ua, expected] of examples) assert.equal(classifyDevice(ua), expected, String(ua));
+});
 test('all three requested events are accepted', async () => {
   const { env, calls } = envFor();
   for (const type of ['view', 'later', 'ok']) assert.equal((await worker.fetch(request(event(type)), env)).status, 202);
@@ -26,7 +47,7 @@ test('all three requested events are accepted', async () => {
 });
 test('rejects invalid and oversized bodies before forwarding', async () => {
   const { env, calls } = envFor();
-  for (const payload of ['{bad', null, [], event('toString'), event('other'), event('ok', { message: 'inject' }), { event: 'ok', sessionId: 'short' }]) {
+  for (const payload of ['{bad', null, [], event('toString'), event('other'), event('ok', { message: 'inject' }), event('ok', { device: 'iphone' }), event('ok', { userAgent: 'iPhone' }), { event: 'ok', sessionId: 'short' }]) {
     assert.equal((await worker.fetch(request(payload), env)).status, 400);
   }
   assert.equal((await worker.fetch(request('x'.repeat(513)), env)).status, 413);
@@ -50,8 +71,8 @@ test('preflight returns exact configured origin', async () => {
   assert.equal(result.headers.get('Access-Control-Allow-Origin'), origin);
 });
 
-function queueFixture() {
-  let value, alarm = null;
+function queueFixture(initialState) {
+  let value = initialState ? structuredClone(initialState) : undefined, alarm = null;
   const ctx = { storage: {
     get: async () => value ? structuredClone(value) : undefined,
     put: async (_, data) => { value = structuredClone(data); },
@@ -67,6 +88,86 @@ test('concurrent duplicate events enter the durable queue once', async () => {
   const responses = await Promise.all(Array.from({ length: 10 }, () => q.fetch(request(event()))));
   assert.equal(state().queue.length, 1);
   assert.equal(responses.filter(r => r.status === 202).length, 1);
+});
+test('a changed device header does not change session/event deduplication', async () => {
+  const { q, state } = queueFixture();
+  await q.fetch(request(event('ok', { device: 'iphone' })));
+  const duplicate = await q.fetch(request(event('ok', { device: 'android_phone' })));
+  assert.equal(duplicate.status, 200);
+  assert.equal((await duplicate.json()).duplicate, true);
+  assert.equal(state().queue.length, 1);
+  assert.equal(Object.values(state().records)[0].device, 'iphone');
+});
+test('the Worker queues only a device code and every event includes its label without raw UA or IP', async () => {
+  const { q, state } = queueFixture();
+  const { env } = envFor();
+  const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 private-ua-marker';
+  const ip = '192.0.2.123';
+  const limitedKeys = [], messages = [], forwarded = [];
+  env.RATE_LIMITER.limit = async ({ key }) => { limitedKeys.push(key); return { success: true }; };
+  env.NOTIFICATIONS.get = () => ({ fetch: async req => {
+    forwarded.push(await req.clone().json());
+    assert.equal(req.headers.get('User-Agent'), null);
+    assert.equal(req.headers.get('CF-Connecting-IP'), null);
+    return q.fetch(req);
+  } });
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (_, options) => { messages.push(JSON.parse(options.body)); return Response.json({ status: 1 }); };
+  try {
+    for (const type of ['view', 'later', 'ok']) {
+      assert.equal((await worker.fetch(request(event(type), { headers: { 'User-Agent': ua, 'CF-Connecting-IP': ip } }), env)).status, 202);
+      await q.alarm();
+    }
+    assert.deepEqual(forwarded, ['view', 'later', 'ok'].map(type => ({ ...event(type), device: 'iphone' })));
+    assert.deepEqual(limitedKeys, [ip, ip, ip]);
+    assert.equal(messages.length, 3);
+    assert.ok(messages[0].message.includes('mở trang'));
+    assert.ok(messages[1].message.includes('“Để sau”'));
+    assert.ok(messages[2].message.includes('“OK”'));
+    for (const message of messages) {
+      assert.ok(message.message.includes('\nThiết bị (ước đoán): iPhone\n'));
+      assert.equal(message.message.includes(sessionId), false);
+    }
+    for (const record of Object.values(state().records)) {
+      assert.equal(record.device, 'iphone');
+      assert.equal(record.status, 'sent');
+      assert.deepEqual(Object.keys(record).sort(), ['attempts', 'device', 'event', 'expiresAt', 'status', 'time']);
+    }
+    const retained = JSON.stringify({ state: state(), messages, forwarded });
+    assert.equal(retained.includes('private-ua-marker'), false);
+    assert.equal(retained.includes(ip), false);
+  } finally { globalThis.fetch = originalFetch; }
+});
+test('old pending records without a device are delivered with the unknown label', async () => {
+  const now = Date.now();
+  const { q, state } = queueFixture({
+    records: { legacy: { event: 'view', time: now, expiresAt: now + 86400000, status: 'queued', attempts: 0 } },
+    queue: ['legacy'], minute: Math.floor(now / 60000), count: 1
+  });
+  const originalFetch = globalThis.fetch;
+  let message;
+  globalThis.fetch = async (_, options) => { message = JSON.parse(options.body).message; return Response.json({ status: 1 }); };
+  try {
+    await q.alarm();
+    assert.ok(message.includes('\nThiết bị (ước đoán): Không xác định\n'));
+    assert.equal(state().records.legacy.status, 'sent');
+    assert.equal(state().queue.length, 0);
+  } finally { globalThis.fetch = originalFetch; }
+});
+test('unknown or invalid internal device values cannot become notification text', async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    for (const device of [undefined, 'toString', '__proto__', 'arbitrary-private-label', { label: 'iPhone' }]) {
+      const { q, state } = queueFixture();
+      let message;
+      globalThis.fetch = async (_, options) => { message = JSON.parse(options.body).message; return Response.json({ status: 1 }); };
+      await q.fetch(request(event('ok', { device })));
+      assert.equal(Object.values(state().records)[0].device, 'unknown');
+      await q.alarm();
+      assert.ok(message.includes('\nThiết bị (ước đoán): Không xác định\n'));
+      assert.equal(message.includes('arbitrary-private-label'), false);
+    }
+  } finally { globalThis.fetch = originalFetch; }
 });
 test('view and click deliver separately; an idle cleanup alarm does not delay a new event', async () => {
   const { q, state, alarm } = queueFixture();
