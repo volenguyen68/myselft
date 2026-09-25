@@ -38,6 +38,12 @@ Lời chào, mạng xã hội và cấu hình công khai ở `site/config.js`; n
 
 Thông báo Pushover có liên kết `/admin?visit=<UUID>`. Đây là mã lượt truy cập không chứa IP; mở liên kết yêu cầu đăng nhập và **không tự chặn**. Dashboard đưa lượt được chọn lên đầu, có tìm kiếm IP, danh sách đang chặn và truy cập gần đây. Chọn **Chặn IP** hoặc **Bỏ chặn** để thay đổi quyền truy cập.
 
+Dashboard có tổng lượt mở, số IP đã ghi nhận, IP quay lại và IP đang chặn; từng IP có bộ đếm `visitCount`, mốc bắt đầu đếm `countingSince`, loại thiết bị và thời gian gần nhất. Có thể tìm theo IP/thiết bị, lọc trạng thái và sắp xếp theo số lượt hoặc thời gian.
+
+Một lượt được tính khi máy chủ trả thành công HTML trang chính cho yêu cầu mở trang (`GET /` hoặc `/index.html`), bao gồm tải lại. Không tính ảnh, font, API kiểm tra quyền truy cập, trang quản trị, sự kiện nút bấm, tải trước/prerender đã được trình duyệt đánh dấu, hoặc IP bị chặn. Đây là số lượt HTML được máy chủ ghi nhận, không phải số người duy nhất; trình duyệt phục hồi trang từ bộ nhớ có thể không gửi yêu cầu mới. Bộ đếm không phụ thuộc việc gửi Pushover thành công. Bản ghi cũ bắt đầu từ 0, không suy đoán số lượt trước khi có tính năng này.
+
+Bộ đếm cộng dồn trong thời gian bản ghi IP còn được lưu, giữ nguyên khi chặn/bỏ chặn; nó đặt lại nếu bản ghi đã hết hạn hoặc bị thay thế theo giới hạn 500 IP. Khi bộ lưu thống kê đầy, trang vẫn mở nếu lần kiểm tra truy cập tiếp theo xác nhận IP được phép.
+
 IP bị chặn nhận đúng thông báo “bạn đã bị block🤔”; HTML, tài nguyên, `/access` và sự kiện thông báo đều bị chặn. Trang `/admin` vẫn truy cập được để chủ trang có thể bỏ chặn mạng của mình. Tab công khai đang mở kiểm tra quyền truy cập mỗi 15 giây khi đang hiển thị.
 
 IP gần đây được giữ 7 ngày, tối đa 500 bản ghi; IP đã chặn được giữ đến khi bỏ chặn. IP có thể dùng chung hoặc thay đổi, nên cùng IP không chứng minh là cùng người hay cùng thiết bị. Nhãn thiết bị chỉ là ước đoán từ trình duyệt; không lưu chuỗi User-Agent đầy đủ.
@@ -50,7 +56,7 @@ Thông tin đăng nhập của chủ trang đã được chuẩn bị trong tệ
 
 Endpoint đang dùng là `https://personal-intro-notifications.volenguyen68.workers.dev/events`, được đặt trong `site/config.js`. Máy chủ nhận ba sự kiện: `view`, `later`, `ok`, rồi gửi qua hàng đợi bền vững. Pushover nhận loại sự kiện, thời gian Việt Nam, nhãn thiết bị ước đoán và liên kết quản trị bằng UUID; không nhận IP nguyên bản.
 
-- Mỗi tab gửi tối đa một thông báo lượt mở và một thông báo cho mỗi lựa chọn. Tải lại cùng tab không gửi lại sự kiện đã được chấp nhận; tab phải đang hiển thị mới tính lượt mở.
+- Mỗi tab gửi tối đa một thông báo lượt mở và một thông báo cho mỗi lựa chọn. Tải lại cùng tab không gửi lại sự kiện đã được chấp nhận; tab phải đang hiển thị mới gửi thông báo lượt mở. Bộ đếm trong quản trị được ghi riêng trên máy chủ và vẫn tăng khi tải lại trang.
 - Giới hạn mặc định: 12 yêu cầu/phút/IP, 20 sự kiện mới/phút toàn trang, tối đa 50 sự kiện đang chờ và 400 dấu sự kiện trong 24 giờ.
 - Pushover chấp nhận tin không bảo đảm iPhone đã hiển thị: thiết bị cần có mạng và quyền thông báo. Nếu kết nối đứt sau khi gửi, hàng đợi không tự gửi lại trường hợp không rõ kết quả để tránh trùng tin.
 - Hai lời nhắn phản hồi trên giao diện vẫn xuất hiện khi dịch vụ thông báo gặp lỗi.
