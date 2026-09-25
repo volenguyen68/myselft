@@ -65,7 +65,7 @@
     const url = new URL(config.notificationEndpoint);
     if (location.protocol === 'https:' && url.protocol === 'https:' && !url.username && !url.password) endpoint = url.href;
   } catch { /* Notifications stay off until a valid endpoint is configured. */ }
-  if (endpoint) $('privacy').textContent = 'Lượt mở trang và lựa chọn của bạn được báo cho chủ trang. Không thu thập tên hay vị trí.';
+  if (endpoint) $('privacy').textContent = 'Lượt mở trang, loại thiết bị ước đoán và lựa chọn của bạn được báo cho chủ trang. Không thu thập tên hay vị trí.';
 
   const memory = new Set();
   const pending = new Map();
