@@ -1,6 +1,15 @@
 @font-face {
+  font-family: 'Inter';
+  src: url('./assets/fonts/InterVariable-4.1.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Jabana';
-  src: url('./assets/fonts/SVN-Jabana.otf') format('opentype');
+  src: url('./assets/fonts/SVN-Jabana.woff2') format('woff2'),
+       url('./assets/fonts/SVN-Jabana.otf') format('opentype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -17,10 +26,11 @@
   --hero-progress: 0;
   --scene-progress: 0;
   --reading: 0;
-  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   --display: var(--sans);
   font-family: var(--sans);
   font-synthesis: none;
+  font-optical-sizing: auto;
 }
 
 * { box-sizing: border-box; }
