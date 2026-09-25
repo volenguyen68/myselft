@@ -48,6 +48,12 @@ IP bị chặn nhận đúng thông báo “bạn đã bị block🤔”; HTML, 
 
 IP gần đây được giữ 7 ngày, tối đa 500 bản ghi; IP đã chặn được giữ đến khi bỏ chặn. IP có thể dùng chung hoặc thay đổi, nên cùng IP không chứng minh là cùng người hay cùng thiết bị. Nhãn thiết bị chỉ là ước đoán từ trình duyệt; không lưu chuỗi User-Agent đầy đủ.
 
+Nhãn thiết bị trong quản trị và Pushover có tên model **khi trình duyệt gửi đủ thông tin**. Với iPhone, chỉ ánh xạ mã phần cứng rõ ràng đã biết (ví dụ `iPhone16,2` → `iPhone 15 Pro Max`, `iPhone10,1` / `iPhone10,4` → `iPhone 8`); Safari thông thường chỉ cho biết iPhone nên hiện `iPhone (chưa xác định đời máy)`. Không suy ra model từ số phiên bản iOS, mã `Mobile/15E148`, màn hình hay GPU.
+
+Với Android, trang yêu cầu `Sec-CH-UA-Model` qua `Accept-CH`; trình duyệt hỗ trợ có thể gửi model trong các yêu cầu tiếp theo. Nếu không có, chỉ dùng model rõ ràng trong User-Agent, bỏ qua giá trị đã rút gọn như `K`. Không dùng `Critical-CH`, không tải lại trang để lấy model, không tăng lượt khi cập nhật nhãn từ sự kiện. Chỉ giữ nhãn ngắn đã kiểm tra, không giữ header gốc. Thông tin vẫn có thể bị giả mạo; IP dùng chung chỉ hiển thị nhãn từ lần ghi nhận gần nhất. Các bản ghi cũ cập nhật nhãn khi có lần truy cập/sự kiện mới.
+
+Tham khảo: [mã thiết bị do DeviceKit duy trì](https://github.com/devicekit/DeviceKit/blob/master/Source/Device.generated.swift), [User-Agent Client Hints của Chrome](https://developer.chrome.com/docs/privacy-security/user-agent-client-hints), [giới hạn thông tin User-Agent trong Safari](https://webkit.org/blog/17333/webkit-features-in-safari-26-0/).
+
 IP nguyên bản chỉ nằm trong `AccessRegistry` riêng, không đưa vào URL quản trị hoặc gửi tới Pushover. Khóa giới hạn tần suất được băm có khóa riêng. Dấu chống trùng sự kiện trong hàng đợi thông báo hết hạn sau khoảng 24 giờ.
 
 Thông tin đăng nhập của chủ trang đã được chuẩn bị trong tệp cục bộ `work/private/ADMIN-LOGIN.txt` ở thư mục làm việc **bên ngoài kho mã nguồn**. Không đưa tệp này hoặc thư mục `work` lên GitHub.
