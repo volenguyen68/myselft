@@ -4,15 +4,18 @@ import worker, { classifyDevice, NotificationQueue } from './index.mjs';
 
 const origin = 'https://volenguyen68.github.io';
 const sessionId = '12345678-1234-1234-1234-123456789abc';
+const visitId = '11111111-2222-4333-8444-555555555555';
 const event = (choice = 'ok', extra = {}) => ({ event: choice, sessionId, ...extra });
 const request = (payload, { headers = {}, ...options } = {}) => new Request('https://example.test/events', {
-  method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers },
+  method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', 'CF-Connecting-IP': '192.0.2.123', ...headers },
   body: typeof payload === 'string' ? payload : JSON.stringify(payload), ...options
 });
 const envFor = () => {
   const calls = [];
   return { calls, env: {
     ALLOWED_ORIGIN: origin, PUSHOVER_APP_TOKEN: 'test-only', PUSHOVER_USER_KEY: 'test-only',
+    PUBLIC_ORIGIN: 'https://website.example', IP_HASH_KEY: 'test-ip-key-with-at-least-32-characters',
+    ACCESS: { idFromName: () => 'access', get: () => ({ fetch: async () => Response.json({ id: visitId, blocked: false }) }) },
     RATE_LIMITER: { limit: async () => ({ success: true }) },
     NOTIFICATIONS: { idFromName: () => 'test', get: () => ({ fetch: async (req) => {
       calls.push(await req.json()); return Response.json({ ok: true, status: 'queued' }, { status: 202 });
@@ -80,7 +83,7 @@ function queueFixture(initialState) {
     setAlarm: async time => { alarm = time; },
     deleteAll: async () => { value = undefined; alarm = null; }
   } };
-  const q = new NotificationQueue(ctx, { PUSHOVER_APP_TOKEN: 'fake', PUSHOVER_USER_KEY: 'fake' });
+  const q = new NotificationQueue(ctx, { PUSHOVER_APP_TOKEN: 'fake', PUSHOVER_USER_KEY: 'fake', PUBLIC_ORIGIN: 'https://website.example' });
   return { q, state: () => value, alarm: () => alarm };
 }
 test('concurrent duplicate events enter the durable queue once', async () => {
@@ -118,8 +121,8 @@ test('the Worker queues only a device code and every event includes its label wi
       assert.equal((await worker.fetch(request(event(type), { headers: { 'User-Agent': ua, 'CF-Connecting-IP': ip } }), env)).status, 202);
       await q.alarm();
     }
-    assert.deepEqual(forwarded, ['view', 'later', 'ok'].map(type => ({ ...event(type), device: 'iphone' })));
-    assert.deepEqual(limitedKeys, [ip, ip, ip]);
+    assert.deepEqual(forwarded, ['view', 'later', 'ok'].map(type => ({ ...event(type), device: 'iphone', visitId })));
+    assert.ok(limitedKeys.every(key => /^[a-f0-9]{64}$/.test(key) && key !== ip));
     assert.equal(messages.length, 3);
     assert.ok(messages[0].message.includes('mở trang'));
     assert.ok(messages[1].message.includes('“Để sau”'));
@@ -127,11 +130,13 @@ test('the Worker queues only a device code and every event includes its label wi
     for (const message of messages) {
       assert.ok(message.message.includes('\nThiết bị (ước đoán): iPhone\n'));
       assert.equal(message.message.includes(sessionId), false);
+      assert.equal(message.url, `https://website.example/admin?visit=${visitId}`);
+      assert.equal(message.url_title, 'Quản lý / chặn IP này');
     }
     for (const record of Object.values(state().records)) {
       assert.equal(record.device, 'iphone');
       assert.equal(record.status, 'sent');
-      assert.deepEqual(Object.keys(record).sort(), ['attempts', 'device', 'event', 'expiresAt', 'status', 'time']);
+      assert.deepEqual(Object.keys(record).sort(), ['attempts', 'device', 'event', 'expiresAt', 'status', 'time', 'visitId']);
     }
     const retained = JSON.stringify({ state: state(), messages, forwarded });
     assert.equal(retained.includes('private-ua-marker'), false);

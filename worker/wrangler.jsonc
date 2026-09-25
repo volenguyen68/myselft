@@ -5,12 +5,20 @@
   "compatibility_date": "2026-09-01",
   "workers_dev": true,
   "vars": {
-    "ALLOWED_ORIGIN": "https://volenguyen68.github.io"
+    "ALLOWED_ORIGIN": "https://volenguyen68.github.io",
+    "PUBLIC_ORIGIN": "https://personal-intro-notifications.volenguyen68.workers.dev"
   },
+  "assets": { "directory": "../site", "binding": "ASSETS", "run_worker_first": true },
   "durable_objects": {
-    "bindings": [{ "name": "NOTIFICATIONS", "class_name": "NotificationQueue" }]
+    "bindings": [
+      { "name": "NOTIFICATIONS", "class_name": "NotificationQueue" },
+      { "name": "ACCESS", "class_name": "AccessRegistry" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NotificationQueue"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["NotificationQueue"] },
+    { "tag": "v2", "new_sqlite_classes": ["AccessRegistry"] }
+  ],
   "ratelimits": [{
     "name": "RATE_LIMITER",
     "namespace_id": "1001",
