@@ -21,7 +21,7 @@ jobs:
       - uses: actions/configure-pages@v6.0.0
       - uses: actions/upload-pages-artifact@v5.0.0
         with:
-          path: site
+          path: redirect
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5.0.1
